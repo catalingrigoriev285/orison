@@ -33,7 +33,7 @@ function settingsPayload(array $overrides = []): array
         'accent_color' => '#ff2d55',
         'default_locale' => 'en',
         'timezone' => 'Europe/Berlin',
-        'illustration' => 'servers',
+        'scene' => 'city',
         ...$overrides,
     ];
 }
@@ -143,26 +143,26 @@ test('settings are validated', function () {
     expect(Setting::count())->toBe(0);
 });
 
-test('the chosen illustration is shown on the status page', function () {
-    expect(app(SystemSettings::class)->brand()['illustration'])->toBe('horizon');
+test('the chosen header scene is shown on the status page', function () {
+    expect(app(SystemSettings::class)->brand()['scene'])->toBe('factory');
 
     $this->put(route('admin.settings.update'), settingsPayload())->assertSessionHasNoErrors();
     reloadSettings();
 
-    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.illustration', 'servers'));
-    $this->get(route('admin.settings.edit'))->assertInertia(fn (Assert $page) => $page->where('settings.illustration', 'servers'));
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.scene', 'city'));
+    $this->get(route('admin.settings.edit'))->assertInertia(fn (Assert $page) => $page->where('settings.scene', 'city'));
 });
 
-test('the illustration can be turned off', function () {
-    $this->put(route('admin.settings.update'), settingsPayload(['illustration' => 'none']))->assertSessionHasNoErrors();
+test('the header scene can be turned off', function () {
+    $this->put(route('admin.settings.update'), settingsPayload(['scene' => 'none']))->assertSessionHasNoErrors();
     reloadSettings();
 
-    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.illustration', null));
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.scene', null));
 });
 
-test('only built-in illustrations can be chosen', function () {
-    $this->put(route('admin.settings.update'), settingsPayload(['illustration' => 'rocket']))
-        ->assertSessionHasErrors('illustration');
+test('only built-in scenes can be chosen', function () {
+    $this->put(route('admin.settings.update'), settingsPayload(['scene' => 'rocket']))
+        ->assertSessionHasErrors('scene');
 
     expect(Setting::count())->toBe(0);
 });
@@ -178,4 +178,13 @@ test('leftover background settings and files are cleaned up', function () {
     expect(Setting::cached())->toBe(['name' => 'Kept']);
     Storage::disk(SystemSettings::DISK)->assertMissing('branding/background-abc123.png');
     Storage::disk(SystemSettings::DISK)->assertExists('branding/logo-keep.png');
+});
+
+test('the old illustration setting is cleaned up', function () {
+    Setting::store(['illustration' => 'servers', 'name' => 'Kept']);
+
+    $migration = require glob(database_path('migrations/*_remove_illustration_setting.php'))[0];
+    $migration->up();
+
+    expect(Setting::cached())->toBe(['name' => 'Kept']);
 });

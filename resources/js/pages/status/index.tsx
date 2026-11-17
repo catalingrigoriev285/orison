@@ -4,7 +4,6 @@ import {
     IncidentRow,
     ActiveIncidentCard,
 } from '@/components/status/incident-card';
-import { StatusIllustration } from '@/components/status/illustrations';
 import { StatusIcon } from '@/components/status/status-icon';
 import { SectionTitle, Surface } from '@/components/status/surface';
 import { UptimeBar } from '@/components/status/uptime-bar';
@@ -65,15 +64,7 @@ export default function StatusIndex({
         <>
             <Head title={t(overallStatusTitle[overall])} />
 
-            {brand.illustration && (
-                <StatusIllustration
-                    illustration={brand.illustration}
-                    status={overall}
-                    className="mx-auto mb-6 w-[220px] sm:w-[280px]"
-                />
-            )}
-
-            <OverallStatus status={overall} />
+            <OverallStatus status={overall} overlap={!!brand.scene} />
 
             {(activeIncidents.length > 0 || activeMaintenances.length > 0) && (
                 <div className="mt-10 space-y-4">
@@ -211,27 +202,42 @@ export default function StatusIndex({
     );
 }
 
-function OverallStatus({ status }: { status: ComponentStatus }) {
+/**
+ * Solid bar in the status colour. With a header scene it overlaps the
+ * bottom edge of the scene.
+ */
+function OverallStatus({
+    status,
+    overlap,
+}: {
+    status: ComponentStatus;
+    overlap: boolean;
+}) {
     const { t, locale, timezone } = useTrans();
     const tone = componentStatusTone[status];
+    // Yellow needs dark text to stay readable.
+    const ink =
+        tone === 'degraded'
+            ? 'text-[#1d1d1f] dark:text-[#1d1d1f]'
+            : 'text-white dark:text-white';
 
     return (
-        <div className="flex flex-col items-center rounded-[22px] border border-hairline bg-card px-6 py-9 text-center shadow-[0_8px_30px_rgba(0,0,0,0.06)] sm:py-11">
-            <div
-                className={cn(
-                    'flex size-16 items-center justify-center rounded-full text-white',
-                    toneClasses[tone].bg,
-                )}
-            >
+        <div
+            className={cn(
+                'relative flex flex-wrap items-center justify-between gap-x-6 gap-y-1 rounded-[14px] px-5 py-4 shadow-[0_6px_20px_rgba(0,0,0,0.10)] sm:px-6 sm:py-5',
+                toneClasses[tone].bg,
+                ink,
+                overlap && '-mt-12 sm:-mt-16',
+            )}
+        >
+            <h1 className="flex items-center gap-3 text-[21px] leading-tight font-semibold tracking-tight sm:text-[26px]">
                 <StatusIcon
                     status={status}
-                    className="size-9 text-white dark:text-white"
+                    className={cn('size-7 shrink-0 sm:size-8', ink)}
                 />
-            </div>
-            <h1 className="mt-5 text-[32px] leading-tight font-semibold tracking-tight sm:text-[40px]">
                 {t(overallStatusTitle[status])}
             </h1>
-            <p className="mt-2 text-[15px] text-muted-foreground">
+            <p className="text-[13px] font-medium opacity-90 sm:text-[14px]">
                 {t('Updated at :time', {
                     time: formatTime(
                         new Date().toISOString(),

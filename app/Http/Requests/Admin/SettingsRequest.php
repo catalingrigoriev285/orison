@@ -24,7 +24,7 @@ class SettingsRequest extends FormRequest
             'timezone' => ['required', Rule::in(DateTimeZone::listIdentifiers())],
             'logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:1024'],
             'favicon' => ['nullable', 'file', 'mimes:png,ico,svg', 'max:512'],
-            'illustration' => ['required', Rule::in([...SystemSettings::ILLUSTRATIONS, 'none'])],
+            'scene' => ['required', Rule::in([...SystemSettings::SCENES, 'none'])],
             'remove_logo' => ['boolean'],
             'remove_favicon' => ['boolean'],
         ];

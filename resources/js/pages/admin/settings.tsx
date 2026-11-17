@@ -5,10 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Field, NativeSelect, Textarea } from '@/components/admin/field';
 import { AdminPage, PageHeader } from '@/components/admin/page-header';
-import {
-    ILLUSTRATIONS,
-    StatusIllustration,
-} from '@/components/status/illustrations';
+import { SCENES, StatusScene } from '@/components/status/scenes';
 import { SegmentedControl } from '@/components/status/segmented-control';
 import { SectionTitle, Surface } from '@/components/status/surface';
 import { Button } from '@/components/ui/button';
@@ -18,7 +15,8 @@ import { useBreadcrumbs } from '@/hooks/use-breadcrumbs';
 import { useTrans } from '@/hooks/use-trans';
 import { cn } from '@/lib/utils';
 import settingsRoutes from '@/routes/admin/settings';
-import type { ComponentStatus, IllustrationStyle, Locale } from '@/types';
+import { componentStatusTone, toneClasses } from '@/lib/status';
+import type { ComponentStatus, Locale, SceneStyle } from '@/types';
 
 type Props = {
     settings: {
@@ -30,7 +28,7 @@ type Props = {
         timezone: string;
         logo_url: string | null;
         favicon_url: string | null;
-        illustration: IllustrationStyle | 'none';
+        scene: SceneStyle | 'none';
     };
     timezones: string[];
 };
@@ -45,7 +43,7 @@ type SettingsForm = {
     timezone: string;
     logo: File | null;
     favicon: File | null;
-    illustration: IllustrationStyle | 'none';
+    scene: SceneStyle | 'none';
     remove_logo: boolean;
     remove_favicon: boolean;
 };
@@ -86,7 +84,7 @@ export default function Settings({ settings, timezones }: Props) {
         timezone: settings.timezone,
         logo: null,
         favicon: null,
-        illustration: settings.illustration,
+        scene: settings.scene,
         remove_logo: false,
         remove_favicon: false,
     });
@@ -327,43 +325,41 @@ export default function Settings({ settings, timezones }: Props) {
                     </section>
 
                     <section>
-                        <SectionTitle>{t('Illustration')}</SectionTitle>
+                        <SectionTitle>{t('Header scene')}</SectionTitle>
                         <Surface className="space-y-5 p-6">
                             <p className="text-[13px] text-muted-foreground">
                                 {t(
-                                    'Shown above the status card. It changes with the current status.',
+                                    'A wide illustration across the top of the status page. Its lights follow the current status.',
                                 )}
                             </p>
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                                {ILLUSTRATIONS.map((item) => (
-                                    <IllustrationTile
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {SCENES.map((item) => (
+                                    <SceneTile
                                         key={item.id}
                                         label={t(item.label)}
-                                        selected={data.illustration === item.id}
+                                        selected={data.scene === item.id}
                                         onSelect={() =>
-                                            setData('illustration', item.id)
+                                            setData('scene', item.id)
                                         }
                                     >
-                                        <StatusIllustration
-                                            illustration={item.id}
+                                        <StatusScene
+                                            scene={item.id}
                                             status="operational"
                                         />
-                                    </IllustrationTile>
+                                    </SceneTile>
                                 ))}
-                                <IllustrationTile
+                                <SceneTile
                                     label={t('None')}
-                                    selected={data.illustration === 'none'}
-                                    onSelect={() =>
-                                        setData('illustration', 'none')
-                                    }
+                                    selected={data.scene === 'none'}
+                                    onSelect={() => setData('scene', 'none')}
                                 >
-                                    <div className="flex aspect-[7/4] items-center justify-center text-[12px] text-muted-foreground">
-                                        {t('No illustration')}
+                                    <div className="flex size-full items-center justify-center text-[12px] text-muted-foreground">
+                                        {t('No scene')}
                                     </div>
-                                </IllustrationTile>
+                                </SceneTile>
                             </div>
-                            {data.illustration !== 'none' && (
-                                <div className="flex flex-col items-center gap-4 rounded-[14px] bg-fill px-4 py-5">
+                            {data.scene !== 'none' && (
+                                <div className="space-y-3">
                                     <SegmentedControl
                                         size="sm"
                                         value={previewStatus}
@@ -391,11 +387,24 @@ export default function Settings({ settings, timezones }: Props) {
                                             },
                                         ]}
                                     />
-                                    <StatusIllustration
-                                        illustration={data.illustration}
-                                        status={previewStatus}
-                                        className="w-[260px]"
-                                    />
+                                    <div className="overflow-hidden rounded-[14px] border border-hairline bg-background pb-4">
+                                        <div className="aspect-[16/5]">
+                                            <StatusScene
+                                                scene={data.scene}
+                                                status={previewStatus}
+                                            />
+                                        </div>
+                                        <div
+                                            className={cn(
+                                                'relative mx-auto -mt-4 h-9 w-3/5 rounded-[8px]',
+                                                toneClasses[
+                                                    componentStatusTone[
+                                                        previewStatus
+                                                    ]
+                                                ].bg,
+                                            )}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </Surface>
@@ -462,11 +471,7 @@ export default function Settings({ settings, timezones }: Props) {
                         color={validColor}
                         logo={logoPreview}
                         favicon={faviconPreview}
-                        illustration={
-                            data.illustration === 'none'
-                                ? null
-                                : data.illustration
-                        }
+                        scene={data.scene === 'none' ? null : data.scene}
                     />
                     <Button
                         type="submit"
@@ -612,13 +617,13 @@ function Preview({
     color,
     logo,
     favicon,
-    illustration,
+    scene,
 }: {
     name: string;
     color: string;
     logo: string | null;
     favicon: string | null;
-    illustration: IllustrationStyle | null;
+    scene: SceneStyle | null;
 }) {
     const { t } = useTrans();
 
@@ -659,19 +664,25 @@ function Preview({
                     </span>
                 </span>
             </div>
-            {illustration && (
-                <div className="px-10 pt-5">
-                    <StatusIllustration
-                        illustration={illustration}
-                        status="operational"
-                    />
+            {scene && (
+                <div className="aspect-[16/5] bg-background">
+                    <StatusScene scene={scene} status="operational" />
                 </div>
             )}
-            <div className="space-y-3 px-4 py-5 text-center">
-                <div className="mx-auto size-10 rounded-full bg-status-operational" />
-                <p className="text-[15px] font-semibold tracking-tight">
-                    {t('All systems operational')}
-                </p>
+            <div
+                className={cn(
+                    'space-y-3 bg-background px-4 pb-5 text-center',
+                    !scene && 'pt-5',
+                )}
+            >
+                <div
+                    className={cn(
+                        'relative rounded-[8px] bg-status-operational px-3 py-2 text-left text-[12px] font-semibold text-white',
+                        scene && '-mt-3',
+                    )}
+                >
+                    ✓ {t('All systems operational')}
+                </div>
                 <div className="flex justify-center gap-2">
                     <span
                         className="rounded-full px-3 py-1 text-[12px] font-medium text-white"
@@ -691,7 +702,7 @@ function Preview({
     );
 }
 
-function IllustrationTile({
+function SceneTile({
     label,
     selected,
     onSelect,
@@ -714,7 +725,7 @@ function IllustrationTile({
                     : 'border-hairline hover:border-input',
             )}
         >
-            <div className="overflow-hidden rounded-[10px] bg-fill p-2">
+            <div className="aspect-[16/5] overflow-hidden rounded-[10px] bg-background">
                 {children}
             </div>
             <span className="px-1 text-[13px] font-medium">{label}</span>

@@ -20,7 +20,7 @@ return [
         'logo' => null,
         'favicon' => null,
         'accent_color' => '#0071e3',
-        'illustration' => 'horizon',
+        'scene' => 'factory',
     ],
 
     /*

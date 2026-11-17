@@ -2,14 +2,20 @@ import { Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { LanguageSwitcher } from '@/components/status/language-switcher';
+import { StatusScene } from '@/components/status/scenes';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useTrans } from '@/hooks/use-trans';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { history } from '@/routes/status';
+import type { ComponentStatus } from '@/types';
 
 export default function StatusLayout({ children }: { children: ReactNode }) {
     const { t } = useTrans();
-    const { brand } = usePage().props;
+    const { props, component } = usePage();
+    const { brand } = props;
+    const overall = props.overall as ComponentStatus | undefined;
+    const scene = component === 'status/index' && overall ? brand.scene : null;
 
     return (
         <div className="flex min-h-svh flex-col bg-background">
@@ -34,7 +40,18 @@ export default function StatusLayout({ children }: { children: ReactNode }) {
                 </div>
             </header>
 
-            <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-8 pb-16 sm:px-6 sm:pt-12">
+            {scene && overall && (
+                <div className="h-[clamp(180px,24vw,340px)] overflow-hidden">
+                    <StatusScene scene={scene} status={overall} />
+                </div>
+            )}
+
+            <main
+                className={cn(
+                    'mx-auto w-full max-w-3xl flex-1 px-4 pb-16 sm:px-6',
+                    !scene && 'pt-8 sm:pt-12',
+                )}
+            >
                 {children}
             </main>
 

@@ -33,7 +33,7 @@ class SettingsController extends Controller
     public function update(SettingsRequest $request): RedirectResponse
     {
         Setting::store([
-            ...$request->safe()->only(['name', 'description', 'website_url', 'accent_color', 'default_locale', 'timezone', 'illustration']),
+            ...$request->safe()->only(['name', 'description', 'website_url', 'accent_color', 'default_locale', 'timezone', 'scene']),
             'logo' => $this->replaceAsset('logo', $request->file('logo'), $request->boolean('remove_logo')),
             'favicon' => $this->replaceAsset('favicon', $request->file('favicon'), $request->boolean('remove_favicon')),
         ]);

@@ -25,7 +25,7 @@ class SystemSettings
         'logo' => 'status.brand.logo',
         'favicon' => 'status.brand.favicon',
         'accent_color' => 'status.brand.accent_color',
-        'illustration' => 'status.brand.illustration',
+        'scene' => 'status.brand.scene',
         'default_locale' => 'status.default_locale',
         'timezone' => 'status.timezone',
     ];
@@ -38,11 +38,11 @@ class SystemSettings
     public const DIRECTORY = 'branding';
 
     /**
-     * Built-in illustration styles; "none" hides the illustration.
+     * Built-in header scenes; "none" hides the scene.
      *
      * @var array<int, string>
      */
-    public const ILLUSTRATIONS = ['horizon', 'servers', 'cloud', 'pulse'];
+    public const SCENES = ['factory', 'datacenter', 'city', 'space'];
 
     public function apply(): void
     {
@@ -72,7 +72,7 @@ class SystemSettings
     /**
      * Brand details shared with every page.
      *
-     * @return array{name: string, description: string|null, website_url: string|null, logo_url: string|null, favicon_url: string|null, accent_color: string, illustration: string|null}
+     * @return array{name: string, description: string|null, website_url: string|null, logo_url: string|null, favicon_url: string|null, accent_color: string, scene: string|null}
      */
     public function brand(): array
     {
@@ -83,18 +83,18 @@ class SystemSettings
             'logo_url' => $this->assetUrl(config('status.brand.logo')),
             'favicon_url' => $this->assetUrl(config('status.brand.favicon')),
             'accent_color' => (string) config('status.brand.accent_color'),
-            'illustration' => $this->illustration(),
+            'scene' => $this->scene(),
         ];
     }
 
     /**
-     * The built-in illustration shown above the status card, or null when turned off.
+     * The built-in scene drawn across the top of the status page, or null when turned off.
      */
-    public function illustration(): ?string
+    public function scene(): ?string
     {
-        $illustration = config('status.brand.illustration');
+        $scene = config('status.brand.scene');
 
-        return in_array($illustration, self::ILLUSTRATIONS, true) ? $illustration : null;
+        return in_array($scene, self::SCENES, true) ? $scene : null;
     }
 
     /**
