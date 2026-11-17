@@ -33,7 +33,7 @@ function settingsPayload(array $overrides = []): array
         'accent_color' => '#ff2d55',
         'default_locale' => 'en',
         'timezone' => 'Europe/Berlin',
-        'show_background' => true,
+        'illustration' => 'servers',
         ...$overrides,
     ];
 }
@@ -143,38 +143,39 @@ test('settings are validated', function () {
     expect(Setting::count())->toBe(0);
 });
 
-test('the status page uses the default background image until another one is uploaded', function () {
-    config(['status.brand.default_background' => 'favicon.svg']);
+test('the chosen illustration is shown on the status page', function () {
+    expect(app(SystemSettings::class)->brand()['illustration'])->toBe('horizon');
 
-    expect(app(SystemSettings::class)->brand()['background_url'])->toBe(asset('favicon.svg'));
-
-    $this->put(route('admin.settings.update'), settingsPayload([
-        'background' => UploadedFile::fake()->image('hero.jpg', 2400, 800),
-    ]))->assertSessionHasNoErrors();
+    $this->put(route('admin.settings.update'), settingsPayload())->assertSessionHasNoErrors();
     reloadSettings();
 
-    $background = config('status.brand.background');
-    Storage::disk(SystemSettings::DISK)->assertExists($background);
-    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page
-        ->where('brand.background_url', route('brand.asset', basename($background))),
-    );
-
-    $this->put(route('admin.settings.update'), settingsPayload(['remove_background' => true]))->assertSessionHasNoErrors();
-    reloadSettings();
-
-    Storage::disk(SystemSettings::DISK)->assertMissing($background);
-    expect(app(SystemSettings::class)->brand()['background_url'])->toBe(asset('favicon.svg'));
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.illustration', 'servers'));
+    $this->get(route('admin.settings.edit'))->assertInertia(fn (Assert $page) => $page->where('settings.illustration', 'servers'));
 });
 
-test('the background image can be hidden', function () {
-    config(['status.brand.default_background' => 'favicon.svg']);
-
-    $this->put(route('admin.settings.update'), settingsPayload(['show_background' => false]))->assertSessionHasNoErrors();
+test('the illustration can be turned off', function () {
+    $this->put(route('admin.settings.update'), settingsPayload(['illustration' => 'none']))->assertSessionHasNoErrors();
     reloadSettings();
 
-    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.background_url', null));
-    $this->get(route('admin.settings.edit'))->assertInertia(fn (Assert $page) => $page
-        ->where('settings.show_background', false)
-        ->where('settings.background_url', asset('favicon.svg')),
-    );
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.illustration', null));
+});
+
+test('only built-in illustrations can be chosen', function () {
+    $this->put(route('admin.settings.update'), settingsPayload(['illustration' => 'rocket']))
+        ->assertSessionHasErrors('illustration');
+
+    expect(Setting::count())->toBe(0);
+});
+
+test('leftover background settings and files are cleaned up', function () {
+    Setting::store(['background' => 'branding/background-abc123.png', 'show_background' => true, 'name' => 'Kept']);
+    Storage::disk(SystemSettings::DISK)->put('branding/background-abc123.png', 'image');
+    Storage::disk(SystemSettings::DISK)->put('branding/logo-keep.png', 'logo');
+
+    $migration = require glob(database_path('migrations/*_remove_background_settings.php'))[0];
+    $migration->up();
+
+    expect(Setting::cached())->toBe(['name' => 'Kept']);
+    Storage::disk(SystemSettings::DISK)->assertMissing('branding/background-abc123.png');
+    Storage::disk(SystemSettings::DISK)->assertExists('branding/logo-keep.png');
 });

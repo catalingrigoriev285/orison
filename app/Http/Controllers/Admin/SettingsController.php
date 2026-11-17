@@ -22,12 +22,9 @@ class SettingsController extends Controller
     {
         return Inertia::render('admin/settings', [
             'settings' => [
-                ...collect($this->settings->current())->except(['logo', 'favicon', 'background'])->all(),
+                ...collect($this->settings->current())->except(['logo', 'favicon'])->all(),
                 'logo_url' => $this->settings->brand()['logo_url'],
                 'favicon_url' => $this->settings->brand()['favicon_url'],
-                'background_url' => $this->settings->backgroundUrl(),
-                'has_custom_background' => filled(config('status.brand.background')),
-                'default_background_url' => $this->settings->defaultBackgroundUrl(),
             ],
             'timezones' => DateTimeZone::listIdentifiers(),
         ]);
@@ -36,11 +33,9 @@ class SettingsController extends Controller
     public function update(SettingsRequest $request): RedirectResponse
     {
         Setting::store([
-            ...$request->safe()->only(['name', 'description', 'website_url', 'accent_color', 'default_locale', 'timezone']),
+            ...$request->safe()->only(['name', 'description', 'website_url', 'accent_color', 'default_locale', 'timezone', 'illustration']),
             'logo' => $this->replaceAsset('logo', $request->file('logo'), $request->boolean('remove_logo')),
             'favicon' => $this->replaceAsset('favicon', $request->file('favicon'), $request->boolean('remove_favicon')),
-            'background' => $this->replaceAsset('background', $request->file('background'), $request->boolean('remove_background')),
-            'show_background' => $request->boolean('show_background'),
         ]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Settings saved.')]);

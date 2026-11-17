@@ -118,5 +118,7 @@ export type Brand = {
     logo_url: string | null;
     favicon_url: string | null;
     accent_color: string;
-    background_url: string | null;
+    illustration: IllustrationStyle | null;
 };
+
+export type IllustrationStyle = 'horizon' | 'servers' | 'cloud' | 'pulse';

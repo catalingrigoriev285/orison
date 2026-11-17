@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Services\Settings\SystemSettings;
 use DateTimeZone;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -23,11 +24,9 @@ class SettingsRequest extends FormRequest
             'timezone' => ['required', Rule::in(DateTimeZone::listIdentifiers())],
             'logo' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp,svg', 'max:1024'],
             'favicon' => ['nullable', 'file', 'mimes:png,ico,svg', 'max:512'],
-            'background' => ['nullable', 'file', 'mimes:png,jpg,jpeg,webp', 'max:4096'],
-            'show_background' => ['required', 'boolean'],
+            'illustration' => ['required', Rule::in([...SystemSettings::ILLUSTRATIONS, 'none'])],
             'remove_logo' => ['boolean'],
             'remove_favicon' => ['boolean'],
-            'remove_background' => ['boolean'],
         ];
     }
 

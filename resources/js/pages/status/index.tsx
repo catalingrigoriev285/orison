@@ -4,6 +4,7 @@ import {
     IncidentRow,
     ActiveIncidentCard,
 } from '@/components/status/incident-card';
+import { StatusIllustration } from '@/components/status/illustrations';
 import { StatusIcon } from '@/components/status/status-icon';
 import { SectionTitle, Surface } from '@/components/status/surface';
 import { UptimeBar } from '@/components/status/uptime-bar';
@@ -64,7 +65,15 @@ export default function StatusIndex({
         <>
             <Head title={t(overallStatusTitle[overall])} />
 
-            <OverallStatus status={overall} onBanner={!!brand.background_url} />
+            {brand.illustration && (
+                <StatusIllustration
+                    illustration={brand.illustration}
+                    status={overall}
+                    className="mx-auto mb-6 w-[220px] sm:w-[280px]"
+                />
+            )}
+
+            <OverallStatus status={overall} />
 
             {(activeIncidents.length > 0 || activeMaintenances.length > 0) && (
                 <div className="mt-10 space-y-4">
@@ -202,24 +211,12 @@ export default function StatusIndex({
     );
 }
 
-function OverallStatus({
-    status,
-    onBanner,
-}: {
-    status: ComponentStatus;
-    onBanner: boolean;
-}) {
+function OverallStatus({ status }: { status: ComponentStatus }) {
     const { t, locale, timezone } = useTrans();
     const tone = componentStatusTone[status];
 
     return (
-        <div
-            className={cn(
-                'relative flex flex-col items-center text-center',
-                onBanner &&
-                    'rounded-[22px] border border-hairline bg-card px-6 py-9 shadow-[0_8px_30px_rgba(0,0,0,0.06)] sm:py-11',
-            )}
-        >
+        <div className="flex flex-col items-center rounded-[22px] border border-hairline bg-card px-6 py-9 text-center shadow-[0_8px_30px_rgba(0,0,0,0.06)] sm:py-11">
             <div
                 className={cn(
                     'flex size-16 items-center justify-center rounded-full text-white',

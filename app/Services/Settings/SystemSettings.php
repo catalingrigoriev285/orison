@@ -25,8 +25,7 @@ class SystemSettings
         'logo' => 'status.brand.logo',
         'favicon' => 'status.brand.favicon',
         'accent_color' => 'status.brand.accent_color',
-        'background' => 'status.brand.background',
-        'show_background' => 'status.brand.show_background',
+        'illustration' => 'status.brand.illustration',
         'default_locale' => 'status.default_locale',
         'timezone' => 'status.timezone',
     ];
@@ -37,6 +36,13 @@ class SystemSettings
     public const DISK = 'local';
 
     public const DIRECTORY = 'branding';
+
+    /**
+     * Built-in illustration styles; "none" hides the illustration.
+     *
+     * @var array<int, string>
+     */
+    public const ILLUSTRATIONS = ['horizon', 'servers', 'cloud', 'pulse'];
 
     public function apply(): void
     {
@@ -66,7 +72,7 @@ class SystemSettings
     /**
      * Brand details shared with every page.
      *
-     * @return array{name: string, description: string|null, website_url: string|null, logo_url: string|null, favicon_url: string|null, accent_color: string, background_url: string|null}
+     * @return array{name: string, description: string|null, website_url: string|null, logo_url: string|null, favicon_url: string|null, accent_color: string, illustration: string|null}
      */
     public function brand(): array
     {
@@ -77,26 +83,18 @@ class SystemSettings
             'logo_url' => $this->assetUrl(config('status.brand.logo')),
             'favicon_url' => $this->assetUrl(config('status.brand.favicon')),
             'accent_color' => (string) config('status.brand.accent_color'),
-            'background_url' => config('status.brand.show_background') ? $this->backgroundUrl() : null,
+            'illustration' => $this->illustration(),
         ];
     }
 
     /**
-     * The uploaded background, or the default image shipped in public/ when none was uploaded.
+     * The built-in illustration shown above the status card, or null when turned off.
      */
-    public function backgroundUrl(): ?string
+    public function illustration(): ?string
     {
-        return $this->assetUrl(config('status.brand.background')) ?? $this->defaultBackgroundUrl();
-    }
+        $illustration = config('status.brand.illustration');
 
-    /**
-     * The image shipped in public/ (config status.brand.default_background), if present.
-     */
-    public function defaultBackgroundUrl(): ?string
-    {
-        $default = (string) config('status.brand.default_background');
-
-        return $default !== '' && is_file(public_path($default)) ? asset($default) : null;
+        return in_array($illustration, self::ILLUSTRATIONS, true) ? $illustration : null;
     }
 
     /**
@@ -104,7 +102,7 @@ class SystemSettings
      */
     public function isCurrentAsset(string $filename): bool
     {
-        return collect([config('status.brand.logo'), config('status.brand.favicon'), config('status.brand.background')])
+        return collect([config('status.brand.logo'), config('status.brand.favicon')])
             ->filter()
             ->contains(fn (string $path) => basename($path) === $filename);
     }

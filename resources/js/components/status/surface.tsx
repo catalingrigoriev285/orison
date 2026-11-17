@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -8,13 +8,16 @@ export function Surface({
     children,
     className,
     as: Element = 'section',
+    style,
 }: {
     children: ReactNode;
     className?: string;
     as?: 'section' | 'div' | 'article';
+    style?: CSSProperties;
 }) {
     return (
         <Element
+            style={style}
             className={cn(
                 'rounded-[18px] border border-hairline bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04)]',
                 className,

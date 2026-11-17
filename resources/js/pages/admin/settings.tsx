@@ -1,15 +1,15 @@
 import { Head, useForm } from '@inertiajs/react';
-import { ImageUp, RotateCcw, Trash2 } from 'lucide-react';
+import { ImageUp, Trash2 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import {
-    Field,
-    NativeSelect,
-    Textarea,
-    Toggle,
-} from '@/components/admin/field';
+import { Field, NativeSelect, Textarea } from '@/components/admin/field';
 import { AdminPage, PageHeader } from '@/components/admin/page-header';
+import {
+    ILLUSTRATIONS,
+    StatusIllustration,
+} from '@/components/status/illustrations';
+import { SegmentedControl } from '@/components/status/segmented-control';
 import { SectionTitle, Surface } from '@/components/status/surface';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,7 @@ import { useBreadcrumbs } from '@/hooks/use-breadcrumbs';
 import { useTrans } from '@/hooks/use-trans';
 import { cn } from '@/lib/utils';
 import settingsRoutes from '@/routes/admin/settings';
-import type { Locale } from '@/types';
+import type { ComponentStatus, IllustrationStyle, Locale } from '@/types';
 
 type Props = {
     settings: {
@@ -30,10 +30,7 @@ type Props = {
         timezone: string;
         logo_url: string | null;
         favicon_url: string | null;
-        background_url: string | null;
-        has_custom_background: boolean;
-        default_background_url: string | null;
-        show_background: boolean;
+        illustration: IllustrationStyle | 'none';
     };
     timezones: string[];
 };
@@ -48,11 +45,9 @@ type SettingsForm = {
     timezone: string;
     logo: File | null;
     favicon: File | null;
-    background: File | null;
-    show_background: boolean;
+    illustration: IllustrationStyle | 'none';
     remove_logo: boolean;
     remove_favicon: boolean;
-    remove_background: boolean;
 };
 
 /** Apple system colours offered as one-click accents. */
@@ -76,7 +71,8 @@ const languageNames: Record<Locale, string> = {
 export default function Settings({ settings, timezones }: Props) {
     const { t, locales } = useTrans();
 
-    const backgroundInput = useRef<HTMLInputElement>(null);
+    const [previewStatus, setPreviewStatus] =
+        useState<ComponentStatus>('operational');
 
     useBreadcrumbs([{ title: t('Settings'), href: settingsRoutes.edit() }]);
 
@@ -90,11 +86,9 @@ export default function Settings({ settings, timezones }: Props) {
         timezone: settings.timezone,
         logo: null,
         favicon: null,
-        background: null,
-        show_background: settings.show_background,
+        illustration: settings.illustration,
         remove_logo: false,
         remove_favicon: false,
-        remove_background: false,
     });
     const { data, setData, errors, processing } = form;
 
@@ -106,15 +100,6 @@ export default function Settings({ settings, timezones }: Props) {
         data.favicon,
         data.remove_favicon ? null : settings.favicon_url,
     );
-    const backgroundPreview = usePreview(
-        data.background,
-        data.remove_background
-            ? settings.default_background_url
-            : settings.background_url,
-    );
-    const hasCustomBackground =
-        data.background !== null ||
-        (settings.has_custom_background && !data.remove_background);
     const validColor = /^#[0-9a-fA-F]{6}$/.test(data.accent_color)
         ? data.accent_color
         : settings.accent_color;
@@ -131,8 +116,6 @@ export default function Settings({ settings, timezones }: Props) {
                     favicon: null,
                     remove_logo: false,
                     remove_favicon: false,
-                    background: null,
-                    remove_background: false,
                 })),
         });
     };
@@ -344,108 +327,77 @@ export default function Settings({ settings, timezones }: Props) {
                     </section>
 
                     <section>
-                        <SectionTitle>{t('Background')}</SectionTitle>
-                        <Surface className="divide-y divide-hairline">
-                            <div className="p-5">
-                                <Toggle
-                                    id="show_background"
-                                    label={t('Show background image')}
-                                    description={t(
-                                        'A wide image at the top of the status page.',
-                                    )}
-                                    checked={data.show_background}
-                                    onChange={(value) =>
-                                        setData('show_background', value)
+                        <SectionTitle>{t('Illustration')}</SectionTitle>
+                        <Surface className="space-y-5 p-6">
+                            <p className="text-[13px] text-muted-foreground">
+                                {t(
+                                    'Shown above the status card. It changes with the current status.',
+                                )}
+                            </p>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                {ILLUSTRATIONS.map((item) => (
+                                    <IllustrationTile
+                                        key={item.id}
+                                        label={t(item.label)}
+                                        selected={data.illustration === item.id}
+                                        onSelect={() =>
+                                            setData('illustration', item.id)
+                                        }
+                                    >
+                                        <StatusIllustration
+                                            illustration={item.id}
+                                            status="operational"
+                                        />
+                                    </IllustrationTile>
+                                ))}
+                                <IllustrationTile
+                                    label={t('None')}
+                                    selected={data.illustration === 'none'}
+                                    onSelect={() =>
+                                        setData('illustration', 'none')
                                     }
-                                />
-                            </div>
-                            <div
-                                className={cn(
-                                    'space-y-4 p-6 transition-opacity duration-200',
-                                    !data.show_background && 'opacity-50',
-                                )}
-                            >
-                                <div className="aspect-[3/1] overflow-hidden rounded-[14px] border border-hairline bg-fill">
-                                    {backgroundPreview ? (
-                                        <img
-                                            src={backgroundPreview}
-                                            alt=""
-                                            className="size-full object-cover"
-                                        />
-                                    ) : (
-                                        <div className="flex size-full items-center justify-center text-[13px] text-muted-foreground">
-                                            {t('No image')}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <p className="text-[12px] text-muted-foreground">
-                                        {hasCustomBackground
-                                            ? t('Custom image.')
-                                            : t(
-                                                  'Using the default image.',
-                                              )}{' '}
-                                        {t(
-                                            'Wide image, about 2400×800. PNG, JPG or WebP, up to 4 MB.',
-                                        )}
-                                    </p>
-                                    <div className="flex shrink-0 gap-1.5">
-                                        <input
-                                            ref={backgroundInput}
-                                            type="file"
-                                            accept=".png,.jpg,.jpeg,.webp"
-                                            className="hidden"
-                                            onChange={(event) => {
-                                                const file =
-                                                    event.target.files?.[0];
-
-                                                if (file) {
-                                                    form.setData((current) => ({
-                                                        ...current,
-                                                        background: file,
-                                                        remove_background: false,
-                                                        show_background: true,
-                                                    }));
-                                                }
-
-                                                event.target.value = '';
-                                            }}
-                                        />
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            size="sm"
-                                            onClick={() =>
-                                                backgroundInput.current?.click()
-                                            }
-                                        >
-                                            <ImageUp /> {t('Upload')}
-                                        </Button>
-                                        {hasCustomBackground && (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() =>
-                                                    form.setData((current) => ({
-                                                        ...current,
-                                                        background: null,
-                                                        remove_background: true,
-                                                    }))
-                                                }
-                                            >
-                                                <RotateCcw />{' '}
-                                                {t('Restore default')}
-                                            </Button>
-                                        )}
+                                >
+                                    <div className="flex aspect-[7/4] items-center justify-center text-[12px] text-muted-foreground">
+                                        {t('No illustration')}
                                     </div>
-                                </div>
-                                {errors.background && (
-                                    <p className="text-sm text-destructive-foreground">
-                                        {errors.background}
-                                    </p>
-                                )}
+                                </IllustrationTile>
                             </div>
+                            {data.illustration !== 'none' && (
+                                <div className="flex flex-col items-center gap-4 rounded-[14px] bg-fill px-4 py-5">
+                                    <SegmentedControl
+                                        size="sm"
+                                        value={previewStatus}
+                                        onChange={(value) =>
+                                            setPreviewStatus(
+                                                value as ComponentStatus,
+                                            )
+                                        }
+                                        items={[
+                                            {
+                                                value: 'operational',
+                                                label: t('Operational'),
+                                            },
+                                            {
+                                                value: 'partial_outage',
+                                                label: t('Degraded'),
+                                            },
+                                            {
+                                                value: 'major_outage',
+                                                label: t('Outage'),
+                                            },
+                                            {
+                                                value: 'under_maintenance',
+                                                label: t('Maintenance'),
+                                            },
+                                        ]}
+                                    />
+                                    <StatusIllustration
+                                        illustration={data.illustration}
+                                        status={previewStatus}
+                                        className="w-[260px]"
+                                    />
+                                </div>
+                            )}
                         </Surface>
                     </section>
 
@@ -510,8 +462,10 @@ export default function Settings({ settings, timezones }: Props) {
                         color={validColor}
                         logo={logoPreview}
                         favicon={faviconPreview}
-                        background={
-                            data.show_background ? backgroundPreview : null
+                        illustration={
+                            data.illustration === 'none'
+                                ? null
+                                : data.illustration
                         }
                     />
                     <Button
@@ -658,18 +612,21 @@ function Preview({
     color,
     logo,
     favicon,
-    background,
+    illustration,
 }: {
     name: string;
     color: string;
     logo: string | null;
     favicon: string | null;
-    background: string | null;
+    illustration: IllustrationStyle | null;
 }) {
     const { t } = useTrans();
 
     return (
-        <Surface className="overflow-hidden">
+        <Surface
+            className="overflow-hidden"
+            style={{ '--primary': color } as React.CSSProperties}
+        >
             <div className="flex items-center gap-2 border-b border-hairline bg-fill px-3 pt-2.5">
                 <div className="flex max-w-full items-center gap-2 rounded-t-[10px] bg-card px-3 py-2 text-[12px]">
                     <img
@@ -702,12 +659,13 @@ function Preview({
                     </span>
                 </span>
             </div>
-            {background && (
-                <img
-                    src={background}
-                    alt=""
-                    className="aspect-[3/1] w-full object-cover"
-                />
+            {illustration && (
+                <div className="px-10 pt-5">
+                    <StatusIllustration
+                        illustration={illustration}
+                        status="operational"
+                    />
+                </div>
             )}
             <div className="space-y-3 px-4 py-5 text-center">
                 <div className="mx-auto size-10 rounded-full bg-status-operational" />
@@ -730,5 +688,36 @@ function Preview({
                 </div>
             </div>
         </Surface>
+    );
+}
+
+function IllustrationTile({
+    label,
+    selected,
+    onSelect,
+    children,
+}: {
+    label: string;
+    selected: boolean;
+    onSelect: () => void;
+    children: React.ReactNode;
+}) {
+    return (
+        <button
+            type="button"
+            aria-pressed={selected}
+            onClick={onSelect}
+            className={cn(
+                'flex flex-col gap-2 rounded-[14px] border bg-card p-2.5 text-left transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                selected
+                    ? 'border-primary ring-2 ring-primary'
+                    : 'border-hairline hover:border-input',
+            )}
+        >
+            <div className="overflow-hidden rounded-[10px] bg-fill p-2">
+                {children}
+            </div>
+            <span className="px-1 text-[13px] font-medium">{label}</span>
+        </button>
     );
 }
