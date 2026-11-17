@@ -691,10 +691,7 @@ function Preview({
                     </span>
                 )}
                 <span className="truncate text-[14px] font-semibold tracking-tight">
-                    {name || 'Orison'}{' '}
-                    <span className="font-normal text-muted-foreground">
-                        {t('Status')}
-                    </span>
+                    {name || 'Orison'}
                 </span>
             </div>
             {scene && (

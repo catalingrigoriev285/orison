@@ -28,9 +28,6 @@ export default function StatusLayout({ children }: { children: ReactNode }) {
                         <BrandMark />
                         <span className="truncate text-[15px] font-semibold tracking-tight">
                             {brand.name}
-                            <span className="ml-1.5 font-normal text-muted-foreground">
-                                {t('Status')}
-                            </span>
                         </span>
                     </Link>
                     <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -76,9 +73,6 @@ export default function StatusLayout({ children }: { children: ReactNode }) {
                                     .replace(/^https?:\/\//, '')
                                     .replace(/\/$/, '')}
                             </a>
-                        )}
-                        {brand.name !== 'Orison' && (
-                            <span>{t('Powered by Orison')}</span>
                         )}
                     </nav>
                 </div>

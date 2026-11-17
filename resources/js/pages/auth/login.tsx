@@ -2,7 +2,6 @@ import { Form, Head, setLayoutProps } from '@inertiajs/react';
 import { useEffect } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -10,15 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useTrans } from '@/hooks/use-trans';
 import { store } from '@/routes/login';
-import { request } from '@/routes/password';
-import PasskeyVerify from '@/components/passkey-verify';
 
 type Props = {
     status?: string;
-    canResetPassword: boolean;
 };
 
-export default function Login({ status, canResetPassword }: Props) {
+export default function Login({ status }: Props) {
     const { t } = useTrans();
 
     useEffect(() => {
@@ -31,8 +27,6 @@ export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
             <Head title={t('Log in')} />
-
-            <PasskeyVerify />
 
             <Form
                 {...store.form()}
@@ -60,20 +54,9 @@ export default function Login({ status, canResetPassword }: Props) {
                             </div>
 
                             <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">
-                                        {t('Password')}
-                                    </Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            {t('Forgot your password?')}
-                                        </TextLink>
-                                    )}
-                                </div>
+                                <Label htmlFor="password">
+                                    {t('Password')}
+                                </Label>
                                 <PasswordInput
                                     id="password"
                                     name="password"
@@ -98,7 +81,7 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <Button
                                 type="submit"
-                                className="mt-4 w-full"
+                                className="w-full"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"

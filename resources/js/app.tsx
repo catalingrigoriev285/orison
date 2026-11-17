@@ -22,7 +22,7 @@ router.on('navigate', (event) => {
 });
 
 void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => (title ? `${appName} - ${title}` : appName),
     layout: (name) => {
         switch (true) {
             case name.startsWith('status/'):
