@@ -102,10 +102,12 @@ COPY docker/Caddyfile /etc/orison/Caddyfile
 COPY --chmod=0755 docker/entrypoint.sh /usr/local/bin/orison-entrypoint
 
 # Code stays root-owned and read-only; www-data may write only to storage/
-# (mounted as a volume), bootstrap/cache and Caddy's own data/config dirs.
+# (mounted as a volume), bootstrap/cache, and the Caddy and PsySH (tinker)
+# dirs under XDG_DATA_HOME=/data and XDG_CONFIG_HOME=/config.
 RUN rm -f /tmp/build.sqlite \
-    && mkdir -p /data/caddy /config/caddy \
-    && chown -R www-data:www-data storage bootstrap/cache /data/caddy /config/caddy
+    && mkdir -p /data/caddy /config/caddy /data/psysh /config/psysh \
+    && chown -R www-data:www-data storage bootstrap/cache \
+        /data/caddy /config/caddy /data/psysh /config/psysh
 
 USER www-data
 

@@ -4,6 +4,10 @@
 	admin off
 	auto_https off
 	frankenphp
+	servers {
+		# HTTP/2 and HTTP/3 need TLS, which the proxy in front terminates.
+		protocols h1
+	}
 }
 
 :{$ORISON_PORT:8080} {
