@@ -42,7 +42,7 @@ class SystemSettings
      *
      * @var array<int, string>
      */
-    public const SCENES = ['factory', 'datacenter', 'city', 'space'];
+    public const SCENES = ['factory', 'datacenter', 'city', 'space', 'seasons'];
 
     public function apply(): void
     {

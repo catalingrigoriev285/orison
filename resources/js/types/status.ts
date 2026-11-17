@@ -121,4 +121,9 @@ export type Brand = {
     scene: SceneStyle | null;
 };
 
-export type SceneStyle = 'factory' | 'datacenter' | 'city' | 'space';
+export type SceneStyle =
+    | 'factory'
+    | 'datacenter'
+    | 'city'
+    | 'space'
+    | 'seasons';

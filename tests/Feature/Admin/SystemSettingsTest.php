@@ -160,6 +160,13 @@ test('the header scene can be turned off', function () {
     $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.scene', null));
 });
 
+test('the seasonal scene can be chosen', function () {
+    $this->put(route('admin.settings.update'), settingsPayload(['scene' => 'seasons']))->assertSessionHasNoErrors();
+    reloadSettings();
+
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('brand.scene', 'seasons'));
+});
+
 test('only built-in scenes can be chosen', function () {
     $this->put(route('admin.settings.update'), settingsPayload(['scene' => 'rocket']))
         ->assertSessionHasErrors('scene');

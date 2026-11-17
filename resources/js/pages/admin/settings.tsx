@@ -5,7 +5,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Field, NativeSelect, Textarea } from '@/components/admin/field';
 import { AdminPage, PageHeader } from '@/components/admin/page-header';
-import { SCENES, StatusScene } from '@/components/status/scenes';
+import {
+    SCENES,
+    SEASONS,
+    seasonOf,
+    StatusScene,
+} from '@/components/status/scenes';
+import type { Season } from '@/components/status/scenes';
 import { SegmentedControl } from '@/components/status/segmented-control';
 import { SectionTitle, Surface } from '@/components/status/surface';
 import { Button } from '@/components/ui/button';
@@ -67,7 +73,11 @@ const languageNames: Record<Locale, string> = {
 };
 
 export default function Settings({ settings, timezones }: Props) {
-    const { t, locales } = useTrans();
+    const { t, locales, timezone } = useTrans();
+
+    const [previewSeason, setPreviewSeason] = useState<Season>(() =>
+        seasonOf(new Date(), timezone),
+    );
 
     const [previewStatus, setPreviewStatus] =
         useState<ComponentStatus>('operational');
@@ -387,11 +397,34 @@ export default function Settings({ settings, timezones }: Props) {
                                             },
                                         ]}
                                     />
+                                    {data.scene === 'seasons' && (
+                                        <>
+                                            <SegmentedControl
+                                                size="sm"
+                                                value={previewSeason}
+                                                onChange={(value) =>
+                                                    setPreviewSeason(
+                                                        value as Season,
+                                                    )
+                                                }
+                                                items={SEASONS.map((item) => ({
+                                                    value: item.id,
+                                                    label: t(item.label),
+                                                }))}
+                                            />
+                                            <p className="text-[13px] text-muted-foreground">
+                                                {t(
+                                                    'The scene changes by itself with the calendar month: spring from March, summer from June, autumn from September, winter from December.',
+                                                )}
+                                            </p>
+                                        </>
+                                    )}
                                     <div className="overflow-hidden rounded-[14px] border border-hairline bg-background pb-4">
                                         <div className="aspect-[16/5]">
                                             <StatusScene
                                                 scene={data.scene}
                                                 status={previewStatus}
+                                                season={previewSeason}
                                             />
                                         </div>
                                         <div

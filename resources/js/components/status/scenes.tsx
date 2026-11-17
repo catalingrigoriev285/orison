@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { ComponentType } from 'react';
+import { useTrans } from '@/hooks/use-trans';
 import { componentStatusTone } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import type { ComponentStatus, SceneStyle } from '@/types';
@@ -17,7 +18,43 @@ export const SCENES: { id: SceneStyle; label: string }[] = [
     { id: 'datacenter', label: 'Data centre' },
     { id: 'city', label: 'City skyline' },
     { id: 'space', label: 'Space mission' },
+    { id: 'seasons', label: 'Seasons' },
 ];
+
+export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
+
+export const SEASONS: { id: Season; label: string }[] = [
+    { id: 'spring', label: 'Spring' },
+    { id: 'summer', label: 'Summer' },
+    { id: 'autumn', label: 'Autumn' },
+    { id: 'winter', label: 'Winter' },
+];
+
+/** Season of the given moment by calendar month, in the status page's timezone. */
+export function seasonOf(date: Date, timezone?: string): Season {
+    let month = date.getMonth() + 1;
+
+    try {
+        month = Number(
+            new Intl.DateTimeFormat('en-US', {
+                month: 'numeric',
+                timeZone: timezone,
+            }).format(date),
+        );
+    } catch {
+        // Unknown timezone: keep the browser's month.
+    }
+
+    if (month >= 3 && month <= 5) {
+        return 'spring';
+    }
+
+    if (month >= 6 && month <= 8) {
+        return 'summer';
+    }
+
+    return month >= 9 && month <= 11 ? 'autumn' : 'winter';
+}
 
 type Variant = 'operational' | 'degraded' | 'major' | 'maintenance';
 
@@ -35,7 +72,7 @@ type Palette = {
     status: string;
 };
 
-type SceneProps = { palette: Palette };
+type SceneProps = { palette: Palette; season: Season };
 
 const G1 = 'var(--border)';
 const G2 = 'var(--input)';
@@ -50,17 +87,22 @@ const SCENE_COMPONENTS: Record<SceneStyle, ComponentType<SceneProps>> = {
     datacenter: DataCentre,
     city: City,
     space: Space,
+    seasons: Seasons,
 };
 
 export function StatusScene({
     scene,
     status,
+    season,
     className,
 }: {
     scene: SceneStyle;
     status: ComponentStatus;
+    /** Only used by the Seasons scene; defaults to the current season. */
+    season?: Season;
     className?: string;
 }) {
+    const { timezone } = useTrans();
     // Rendered as a component, never called as a function: the React
     // Compiler gives every scene its own memo hooks.
     const Scene = SCENE_COMPONENTS[scene];
@@ -80,6 +122,7 @@ export function StatusScene({
         >
             <Scene
                 key={scene}
+                season={season ?? seasonOf(new Date(), timezone)}
                 palette={{
                     variant: variantOf[status],
                     status: `var(--status-${componentStatusTone[status]})`,
@@ -1148,6 +1191,560 @@ function Space({ palette }: SceneProps) {
                     strokeWidth="3"
                 />
             ))}
+        </>
+    );
+}
+
+/* --------------------------------- Seasons --------------------------------- */
+
+const SEASON_COLORS: Record<
+    Season,
+    { ground: string; canopy: string[]; sun: string }
+> = {
+    spring: {
+        ground: '#34c759',
+        canopy: ['#8fd88f', '#a6e3a1', '#7ccf86'],
+        sun: WARM,
+    },
+    summer: {
+        ground: '#34c759',
+        canopy: ['#34c759', '#2fb350', '#4cd26b'],
+        sun: WARM,
+    },
+    autumn: {
+        ground: '#d9a441',
+        canopy: ['#ff9500', '#ff6b3d', '#f5b800'],
+        sun: '#ff9500',
+    },
+    winter: { ground: G2, canopy: [], sun: SURFACE },
+};
+
+const PINE = '#2fa55a';
+const TRUNK = '#b08968';
+const PINK = '#ff8fb1';
+const RED = '#ff3b30';
+const SNOW = '#ffffff';
+
+/** Height of the rolling ground at a given x. */
+function hill(x: number): number {
+    return 256 + 20 * ((x - 800) / 800) ** 2;
+}
+
+function LeafTree({
+    x,
+    scale = 1,
+    season,
+    index,
+}: {
+    x: number;
+    scale?: number;
+    season: Season;
+    index: number;
+}) {
+    const canopy = SEASON_COLORS[season].canopy;
+    const color = canopy[index % canopy.length];
+
+    return (
+        <g
+            transform={`translate(${x} ${hill(x) + 2}) scale(${scale})`}
+            stroke={TRUNK}
+            strokeWidth="5"
+            strokeLinecap="round"
+        >
+            <path d="M0 0V-62" />
+            {season === 'winter' ? (
+                <path
+                    d="M0 -40L-24 -72M0 -52L22 -84M0 -62L-8 -104M0 -62L14 -108M-24 -72l-14 -6M-24 -72l-2 -16M22 -84l16 -2M22 -84l2 -16"
+                    strokeWidth="3.5"
+                />
+            ) : (
+                <g stroke="none" fill={color}>
+                    <circle cx="-24" cy="-72" r="26" />
+                    <circle cx="24" cy="-72" r="26" />
+                    <circle cy="-96" r="34" />
+                    {season === 'spring' &&
+                        [
+                            [-28, -78],
+                            [-6, -112],
+                            [16, -90],
+                            [30, -66],
+                            [-10, -70],
+                            [8, -122],
+                        ].map(([cx, cy]) => (
+                            <circle
+                                key={`${cx}${cy}`}
+                                cx={cx}
+                                cy={cy}
+                                r="4.5"
+                                fill={PINK}
+                            />
+                        ))}
+                </g>
+            )}
+        </g>
+    );
+}
+
+function PineTree({
+    x,
+    scale = 1,
+    season,
+}: {
+    x: number;
+    scale?: number;
+    season: Season;
+}) {
+    return (
+        <g transform={`translate(${x} ${hill(x) + 2}) scale(${scale})`}>
+            <path d="M0 0V-20" stroke={TRUNK} strokeWidth="6" />
+            <path
+                d="M-34 -16H34L0 -62ZM-27 -48H27L0 -90ZM-20 -78H20L0 -116Z"
+                fill={PINE}
+                stroke={PINE}
+                strokeWidth="3"
+                strokeLinejoin="round"
+            />
+            {season === 'winter' && (
+                <path
+                    d="M-12 -98L0 -116L12 -98M-16 -68L0 -90L16 -68M-20 -38L0 -62L20 -38"
+                    stroke={SNOW}
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            )}
+        </g>
+    );
+}
+
+function Snowman({ x }: { x: number }) {
+    return (
+        <g
+            transform={`translate(${x} ${hill(x) + 2})`}
+            fill={SNOW}
+            stroke={G2}
+            strokeWidth="3"
+        >
+            <circle cy="-20" r="21" />
+            <circle cy="-50" r="15" />
+            <circle cy="-73" r="11" />
+            <path
+                d="M-13 -62H13"
+                stroke={ACCENT}
+                strokeWidth="5"
+                strokeLinecap="round"
+            />
+            <path
+                d="M9 -62v13"
+                stroke={ACCENT}
+                strokeWidth="5"
+                strokeLinecap="round"
+            />
+            <path d="M0 -72l13 3l-13 2Z" fill="#ff9500" stroke="none" />
+            <circle cx="-4" cy="-77" r="1.6" fill={G2} stroke="none" />
+            <circle cx="4" cy="-77" r="1.6" fill={G2} stroke="none" />
+            <path d="M-8 -83h16v-11h-16Z" fill={ACCENT} stroke="none" />
+            <path
+                d="M-13 -83h26"
+                stroke={ACCENT}
+                strokeWidth="4"
+                strokeLinecap="round"
+            />
+        </g>
+    );
+}
+
+/** Things that drift through the air: petals, birds, leaves or snow. */
+function SeasonAir({ season }: { season: Season }) {
+    if (season === 'summer') {
+        return (
+            <g stroke={G2} strokeWidth="3" strokeLinecap="round">
+                {[
+                    [420, 70],
+                    [470, 96],
+                    [1010, 60],
+                ].map(([x, y]) => (
+                    <path
+                        key={x}
+                        d={`M${x - 11} ${y - 2}q6 -6 11 2q5 -8 11 -2`}
+                    />
+                ))}
+            </g>
+        );
+    }
+
+    const count = season === 'winter' ? 46 : 24;
+    const leaves = SEASON_COLORS.autumn.canopy;
+
+    return (
+        <>
+            {Array.from({ length: count }, (_, index) => {
+                const x = (index * 197 + 60) % 1600;
+                const y = 18 + ((index * 83) % 226);
+
+                if (season === 'winter') {
+                    return (
+                        <circle
+                            key={index}
+                            cx={x}
+                            cy={y}
+                            r={2.2 + (index % 3) * 0.9}
+                            fill={G2}
+                        />
+                    );
+                }
+
+                if (season === 'autumn') {
+                    return (
+                        <path
+                            key={index}
+                            transform={`translate(${x} ${y}) rotate(${(index * 47) % 360})`}
+                            d="M0 -8C6 -4 6 4 0 8C-6 4 -6 -4 0 -8Z"
+                            fill={leaves[index % leaves.length]}
+                        />
+                    );
+                }
+
+                return (
+                    <ellipse
+                        key={index}
+                        transform={`translate(${x} ${y}) rotate(${(index * 47) % 180})`}
+                        rx="5"
+                        ry="2.8"
+                        fill={PINK}
+                    />
+                );
+            })}
+        </>
+    );
+}
+
+/** What grows or lies on the ground, and what the second robot is busy with. */
+function SeasonGround({ season }: { season: Season }) {
+    const at = (x: number) => `translate(${x} ${hill(x) + 2})`;
+
+    if (season === 'winter') {
+        return (
+            <>
+                {[150, 470, 990, 1210, 1490].map((x) => (
+                    <path
+                        key={x}
+                        transform={at(x)}
+                        d="M-40 2Q0 -24 40 2"
+                        fill={SURFACE}
+                        stroke={G2}
+                        strokeWidth="3"
+                    />
+                ))}
+                <Snowman x={634} />
+            </>
+        );
+    }
+
+    if (season === 'autumn') {
+        return (
+            <>
+                {[210, 652, 1040, 1390].map((x) => (
+                    <g key={x} transform={at(x)}>
+                        <path
+                            d="M-36 0Q-18 -24 0 -22Q20 -26 36 0Z"
+                            fill="#ff9500"
+                        />
+                        <path
+                            d="M-18 0Q-6 -14 8 -12Q20 -12 26 0Z"
+                            fill="#f5b800"
+                        />
+                        <circle cx="-14" cy="-12" r="5" fill="#ff6b3d" />
+                    </g>
+                ))}
+                {/* Rake in the robot's hand */}
+                <g
+                    transform={at(560)}
+                    stroke={TRUNK}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                >
+                    <path d="M35 -52L62 -6" />
+                    <path d="M52 -8L72 -4M54 -8l-3 7M61 -6l-3 7M68 -5l-3 7" />
+                </g>
+                {/* Pumpkin */}
+                <g transform={at(486)}>
+                    <ellipse cy="-13" rx="19" ry="14" fill="#ff9500" />
+                    <path
+                        d="M0 -26V-1M-9 -25Q-14 -13 -9 -1M9 -25Q14 -13 9 -1"
+                        stroke="#e07800"
+                        strokeWidth="2"
+                    />
+                    <path
+                        d="M0 -27q1 -7 6 -8"
+                        stroke={PINE}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                    />
+                </g>
+            </>
+        );
+    }
+
+    const flowers = season === 'spring' ? [PINK, RED, WARM] : [SURFACE, WARM];
+    const spots =
+        season === 'spring'
+            ? [128, 214, 462, 610, 634, 658, 682, 980, 1064, 1218, 1392, 1476]
+            : [128, 214, 462, 498, 640, 668, 980, 1016, 1064, 1218, 1392, 1476];
+
+    return (
+        <>
+            {spots.map((x, index) => (
+                <g
+                    key={x}
+                    transform={at(x)}
+                    stroke="#34c759"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                >
+                    <path d="M0 0V-18M0 -6q-7 -1 -8 -8M0 -4q7 -1 8 -8" />
+                    <circle
+                        cy="-22"
+                        r="6"
+                        fill={flowers[index % flowers.length]}
+                        stroke={season === 'summer' ? G2 : 'none'}
+                        strokeWidth="2"
+                    />
+                    {season === 'summer' && (
+                        <circle cy="-22" r="2.2" fill={WARM} stroke="none" />
+                    )}
+                </g>
+            ))}
+            {season === 'spring' ? (
+                /* Watering can */
+                <g
+                    transform={at(560)}
+                    stroke={ACCENT}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                >
+                    <path d="M34 -60H52V-42H34Z" fill={SURFACE} />
+                    <path d="M52 -48L66 -58" />
+                    <path
+                        d="M70 -50v6M77 -44v6M66 -38v6M74 -32v6"
+                        strokeWidth="2.5"
+                    />
+                </g>
+            ) : (
+                /* Kite */
+                <g transform={at(560)}>
+                    <path
+                        d="M35 -76Q70 -120 96 -188"
+                        stroke={G2}
+                        strokeWidth="2"
+                    />
+                    <g transform="translate(100 -204) rotate(24)">
+                        <path
+                            d="M0 -22L15 0L0 26L-15 0Z"
+                            fill={RED}
+                            stroke={RED}
+                            strokeWidth="3"
+                            strokeLinejoin="round"
+                        />
+                        <path
+                            d="M0 -22V26M-15 0H15"
+                            stroke={SURFACE}
+                            strokeWidth="2"
+                        />
+                    </g>
+                    <path
+                        d="M92 -180q-10 10 -2 20q8 10 -2 20"
+                        stroke={WARM}
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                    />
+                </g>
+            )}
+        </>
+    );
+}
+
+function Seasons({ palette, season }: SceneProps) {
+    const colors = SEASON_COLORS[season];
+    const signal = palette.variant === 'operational' ? ACCENT : palette.status;
+    const hut = hill(740);
+    const mast = hill(840);
+
+    return (
+        <>
+            {/* Sky */}
+            {season === 'summer' && (
+                <g stroke={WARM} strokeWidth="5" strokeLinecap="round">
+                    {Array.from({ length: 12 }, (_, index) => (
+                        <path
+                            key={index}
+                            transform={`translate(1250 84) rotate(${index * 30})`}
+                            d="M0 -52V-66"
+                        />
+                    ))}
+                </g>
+            )}
+            <circle
+                cx="1250"
+                cy={season === 'autumn' || season === 'winter' ? 104 : 84}
+                r={season === 'summer' ? 40 : season === 'winter' ? 26 : 32}
+                fill={colors.sun}
+                stroke={season === 'winter' ? G2 : 'none'}
+                strokeWidth="3"
+            />
+            <Cloud x={170} y={40} scale={1.3} />
+            {season !== 'summer' && <Cloud x={640} y={22} />}
+            <Cloud x={1000} y={50} scale={1.1} />
+            {season === 'winter' && <Cloud x={1320} y={30} scale={1.2} />}
+
+            {/* Far hills */}
+            <path
+                d="M0 236C200 186 380 188 560 226C720 178 940 170 1120 222C1300 178 1480 188 1600 226V320H0Z"
+                fill={G1}
+            />
+            {season === 'winter' && (
+                <path
+                    d="M250 201Q300 190 350 196M760 186Q850 172 930 186M1290 196Q1350 184 1420 192"
+                    stroke={SURFACE}
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                />
+            )}
+
+            {[60, 250, 400, 1090, 1300, 1530].map((x, index) => (
+                <LeafTree
+                    key={x}
+                    x={x}
+                    season={season}
+                    index={index}
+                    scale={0.85 + (index % 3) * 0.12}
+                />
+            ))}
+            {[160, 330, 1010, 1180, 1420].map((x, index) => (
+                <PineTree
+                    key={x}
+                    x={x}
+                    season={season}
+                    scale={0.9 + (index % 2) * 0.2}
+                />
+            ))}
+
+            {/* Weather hut */}
+            {(season === 'winter' || season === 'autumn') && (
+                <g fill={G1}>
+                    <circle cx="776" cy={hut - 128} r="7" />
+                    <circle cx="786" cy={hut - 146} r="9" />
+                    <circle cx="780" cy={hut - 168} r="11" />
+                </g>
+            )}
+            <rect
+                x="768"
+                y={hut - 116}
+                width="14"
+                height="30"
+                fill={SURFACE}
+                stroke={G2}
+                strokeWidth="3"
+            />
+            <rect
+                x="692"
+                y={hut - 68}
+                width="96"
+                height="72"
+                rx="4"
+                fill={SURFACE}
+                stroke={G2}
+                strokeWidth="3"
+            />
+            <path
+                d={`M680 ${hut - 66}L740 ${hut - 112}L800 ${hut - 66}Z`}
+                fill={ACCENT}
+                stroke={ACCENT}
+                strokeWidth="4"
+                strokeLinejoin="round"
+            />
+            {season === 'winter' && (
+                <path
+                    d={`M686 ${hut - 72}L740 ${hut - 113}L794 ${hut - 72}`}
+                    stroke={SNOW}
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            )}
+            <rect
+                x="704"
+                y={hut - 52}
+                width="26"
+                height="24"
+                rx="3"
+                fill={WARM}
+                stroke={G2}
+                strokeWidth="3"
+            />
+            <rect
+                x="746"
+                y={hut - 46}
+                width="26"
+                height="48"
+                rx="3"
+                fill={G1}
+                stroke={G2}
+                strokeWidth="3"
+            />
+            <circle cx="766" cy={hut - 20} r="2.5" fill={ACCENT} />
+
+            {/* Mast with the status beacon */}
+            <path
+                d={`M840 ${mast + 2}V${mast - 146}M826 ${mast + 2}L840 ${mast - 40}L854 ${mast + 2}`}
+                stroke={G2}
+                strokeWidth="3.5"
+                strokeLinejoin="round"
+            />
+            <g stroke={signal} strokeWidth="3" strokeLinecap="round">
+                <path d={`M818 ${mast - 164}a26 26 0 0 1 44 0`} />
+                <path
+                    d={`M804 ${mast - 174}a42 42 0 0 1 72 0`}
+                    strokeDasharray="4 7"
+                />
+            </g>
+            <circle cx="840" cy={mast - 152} r="8" fill={palette.status} />
+
+            <SeasonGround season={season} />
+
+            <Robot
+                x={560}
+                y={hill(560) + 2}
+                palette={palette}
+                arm={
+                    season === 'winter' || season === 'summer'
+                        ? 'up'
+                        : 'forward'
+                }
+            />
+            <Robot
+                x={908}
+                y={hill(908) + 2}
+                palette={palette}
+                arm="forward"
+                tablet
+                flip
+            />
+            <StatusSign x={966} y={hill(966) + 2} palette={palette} />
+
+            {/*
+              Ground, drawn over everything standing on it so nothing
+              pokes out below the ground line.
+            */}
+            <path
+                d="M-10 276Q800 236 1610 276V364H-10Z"
+                fill={SURFACE}
+                stroke={colors.ground}
+                strokeWidth="4"
+            />
+
+            <SeasonAir season={season} />
         </>
     );
 }
