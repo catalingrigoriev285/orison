@@ -68,6 +68,27 @@ In production, two background processes must be running, otherwise no checks are
 php artisan queue:work
 ```
 
+## Docker
+
+The `Dockerfile` builds a production image (FrankenPHP, PHP 8.4) that serves the app on port 8080. `compose.yaml` runs three containers from it: the web server, the queue worker and the scheduler. They share one `storage` volume, which holds the SQLite database (in WAL mode) and the uploaded logos.
+
+```bash
+cp .env.docker.example .env.docker
+# set APP_KEY (echo "base64:$(openssl rand -base64 32)") and APP_URL
+docker compose up -d --build
+docker compose exec web php artisan status:create-admin you@example.com
+```
+
+The web container runs the migrations each time it starts. The queue worker and scheduler start once it reports healthy on `/up`.
+
+Behind a TLS proxy, set `TRUSTED_PROXIES` (the proxy's address, or the Docker bridge range when the port is published) and `SESSION_SECURE_COOKIE=true`, so links use `https` and the real client IP is seen. Scripts can pass the admin password on standard input instead of at the prompt:
+
+```bash
+printf '%s\n' "$PASSWORD" | docker compose exec -T web php artisan status:create-admin you@example.com --password-stdin
+```
+
+To use MySQL or PostgreSQL instead of SQLite, set the `DB_*` variables in `.env.docker`.
+
 ## Configuration
 
 Most things are edited in **Admin → Settings**. The `.env` values below are only starting defaults or things that have no place in the panel.
@@ -79,6 +100,8 @@ Most things are edited in **Admin → Settings**. The `.env` values below are on
 | `STATUS_TIMEZONE` | Default display timezone (data is stored in UTC) |
 | `STATUS_WEBHOOK_URL` | Where alerts are sent |
 | `STATUS_WEBHOOK_SECRET` | Secret used to sign alerts |
+| `TRUSTED_PROXIES` | Comma-separated IPs or CIDR ranges of reverse proxies in front of Orison |
+| `DB_JOURNAL_MODE`, `DB_BUSY_TIMEOUT`, `DB_SYNCHRONOUS` | SQLite pragmas (the Docker image sets `wal`, `5000`, `normal`) |
 
 Further options, such as how many days of history to keep, are in [config/status.php](config/status.php).
 

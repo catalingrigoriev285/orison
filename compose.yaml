@@ -1,0 +1,54 @@
+# Orison with Docker Compose: the web server, the queue worker and the
+# scheduler run from one image and share one storage volume (the SQLite
+# database and uploaded logos live there).
+#
+#   cp .env.docker.example .env.docker      # then set APP_KEY and APP_URL
+#   docker compose up -d --build
+#   docker compose exec web php artisan status:create-admin you@example.com
+#
+# The page is served on http://localhost:8080 (set ORISON_HTTP_PORT to change
+# it). Put a TLS-terminating proxy in front of it for production.
+
+x-orison: &orison
+  image: orison:local
+  restart: unless-stopped
+  init: true
+  env_file:
+    - .env.docker
+  volumes:
+    - storage:/app/storage
+
+services:
+  web:
+    <<: *orison
+    build: .
+    ports:
+      - "${ORISON_HTTP_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8080/up') === false ? 1 : 0);"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Runs the monitor checks and sends the alert webhooks.
+  queue:
+    <<: *orison
+    pull_policy: never
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--max-time=3600"]
+    stop_grace_period: 30s
+    depends_on:
+      web:
+        condition: service_healthy
+
+  # Dispatches due monitors, heartbeat and maintenance checks every minute.
+  scheduler:
+    <<: *orison
+    pull_policy: never
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  storage:
