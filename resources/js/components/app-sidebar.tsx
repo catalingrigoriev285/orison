@@ -1,5 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-react';
+import {
+    Activity,
+    BellRing,
+    Boxes,
+    CalendarClock,
+    ExternalLink,
+    LayoutGrid,
+    TriangleAlert,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,38 +21,77 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useTrans } from '@/hooks/use-trans';
+import { overview } from '@/routes/admin';
+import alerts from '@/routes/admin/alerts';
+import components from '@/routes/admin/components';
+import incidents from '@/routes/admin/incidents';
+import maintenances from '@/routes/admin/maintenances';
+import monitors from '@/routes/admin/monitors';
+import { home as statusPage } from '@/routes';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
-
 export function AppSidebar() {
+    const { t } = useTrans();
+    const { isCurrentUrl, isCurrentOrParentUrl } = useCurrentUrl();
+
+    const section = (href: NavItem['href']) => isCurrentOrParentUrl(href);
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: t('Overview'),
+            href: overview(),
+            icon: LayoutGrid,
+            isActive: isCurrentUrl(overview()),
+        },
+        {
+            title: t('Monitors'),
+            href: monitors.index(),
+            icon: Activity,
+            isActive: section(monitors.index()),
+        },
+        {
+            title: t('Components'),
+            href: components.index(),
+            icon: Boxes,
+            isActive: section(components.index()),
+        },
+        {
+            title: t('Incidents'),
+            href: incidents.index(),
+            icon: TriangleAlert,
+            isActive: section(incidents.index()),
+        },
+        {
+            title: t('Maintenance'),
+            href: maintenances.index(),
+            icon: CalendarClock,
+            isActive: section(maintenances.index()),
+        },
+        {
+            title: t('Alerts'),
+            href: alerts.index(),
+            icon: BellRing,
+            isActive: section(alerts.index()),
+        },
+    ];
+
+    const footerNavItems: NavItem[] = [
+        {
+            title: t('View status page'),
+            href: statusPage(),
+            icon: ExternalLink,
+        },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={overview()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -53,7 +100,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={mainNavItems} label={t('Monitoring')} />
             </SidebarContent>
 
             <SidebarFooter>

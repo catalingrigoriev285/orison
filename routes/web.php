@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\StatusPageController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', [StatusPageController::class, 'index'])->name('home');
+Route::get('incidents/{incident}', [StatusPageController::class, 'incident'])->name('status.incident');
+Route::get('history', [StatusPageController::class, 'history'])->name('status.history');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::redirect('dashboard', '/admin')->name('dashboard');
 });
 
+require __DIR__.'/admin.php';
 require __DIR__.'/settings.php';

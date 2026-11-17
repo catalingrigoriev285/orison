@@ -10,7 +10,7 @@ export type UseAppearanceReturn = {
 };
 
 const listeners = new Set<() => void>();
-let currentAppearance: Appearance = 'system';
+let currentAppearance: Appearance = 'light';
 
 const prefersDark = (): boolean => {
     if (typeof window === 'undefined') {
@@ -34,7 +34,7 @@ const getStoredAppearance = (): Appearance => {
         return 'system';
     }
 
-    return (localStorage.getItem('appearance') as Appearance) || 'system';
+    return (localStorage.getItem('appearance') as Appearance) || 'light';
 };
 
 const isDarkMode = (appearance: Appearance): boolean => {
@@ -76,8 +76,15 @@ export function initializeTheme(): void {
     }
 
     if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'system');
-        setCookie('appearance', 'system');
+        // Fall back to the cookie the server rendered with, then to light.
+        const fromCookie = document.cookie.match(
+            /(?:^|; )appearance=(light|dark|system)/,
+        )?.[1];
+        const initial: Appearance =
+            (fromCookie as Appearance | undefined) ?? 'light';
+
+        localStorage.setItem('appearance', initial);
+        setCookie('appearance', initial);
     }
 
     currentAppearance = getStoredAppearance();
@@ -91,7 +98,7 @@ export function useAppearance(): UseAppearanceReturn {
     const appearance: Appearance = useSyncExternalStore(
         subscribe,
         () => currentAppearance,
-        () => 'system',
+        () => 'light',
     );
 
     const resolvedAppearance: ResolvedAppearance = isDarkMode(appearance)

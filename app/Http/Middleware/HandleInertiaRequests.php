@@ -38,10 +38,34 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'brand' => config('status.brand'),
             'auth' => [
                 'user' => $request->user(),
             ],
+            'locale' => app()->getLocale(),
+            'locales' => config('status.locales'),
+            'timezone' => config('status.timezone'),
+            'translations' => fn () => $this->translations(app()->getLocale()),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
+    }
+
+    /**
+     * UI strings for the active locale. English strings are the keys, so English needs no file.
+     *
+     * @return array<string, string>
+     */
+    private function translations(string $locale): array
+    {
+        $path = lang_path("{$locale}.json");
+
+        if (! is_file($path)) {
+            return [];
+        }
+
+        /** @var array<string, string> $translations */
+        $translations = json_decode((string) file_get_contents($path), true) ?? [];
+
+        return $translations;
     }
 }
