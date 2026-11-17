@@ -1,4 +1,4 @@
-import { Head, Link, usePoll } from '@inertiajs/react';
+import { Head, Link, usePage, usePoll } from '@inertiajs/react';
 import { CalendarClock, ChevronRight, Info } from 'lucide-react';
 import {
     IncidentRow,
@@ -47,6 +47,7 @@ export default function StatusIndex({
     pastDays,
 }: Props) {
     const { t, locale } = useTrans();
+    const { brand } = usePage().props;
 
     usePoll(60_000, {
         only: [
@@ -63,7 +64,7 @@ export default function StatusIndex({
         <>
             <Head title={t(overallStatusTitle[overall])} />
 
-            <OverallStatus status={overall} />
+            <OverallStatus status={overall} onBanner={!!brand.background_url} />
 
             {(activeIncidents.length > 0 || activeMaintenances.length > 0) && (
                 <div className="mt-10 space-y-4">
@@ -81,6 +82,20 @@ export default function StatusIndex({
                         />
                     ))}
                 </div>
+            )}
+
+            {upcomingMaintenances.length > 0 && (
+                <section className="mt-10">
+                    <SectionTitle>{t('Scheduled maintenance')}</SectionTitle>
+                    <div className="space-y-4">
+                        {upcomingMaintenances.map((maintenance) => (
+                            <MaintenanceCard
+                                key={maintenance.id}
+                                maintenance={maintenance}
+                            />
+                        ))}
+                    </div>
+                </section>
             )}
 
             <div className="mt-12 space-y-8">
@@ -148,20 +163,6 @@ export default function StatusIndex({
                 ))}
             </div>
 
-            {upcomingMaintenances.length > 0 && (
-                <section className="mt-12">
-                    <SectionTitle>{t('Scheduled maintenance')}</SectionTitle>
-                    <div className="space-y-4">
-                        {upcomingMaintenances.map((maintenance) => (
-                            <MaintenanceCard
-                                key={maintenance.id}
-                                maintenance={maintenance}
-                            />
-                        ))}
-                    </div>
-                </section>
-            )}
-
             <section className="mt-14">
                 <SectionTitle>{t('Past incidents')}</SectionTitle>
                 <Surface className="divide-y divide-hairline">
@@ -201,12 +202,24 @@ export default function StatusIndex({
     );
 }
 
-function OverallStatus({ status }: { status: ComponentStatus }) {
+function OverallStatus({
+    status,
+    onBanner,
+}: {
+    status: ComponentStatus;
+    onBanner: boolean;
+}) {
     const { t, locale, timezone } = useTrans();
     const tone = componentStatusTone[status];
 
     return (
-        <div className="flex flex-col items-center text-center">
+        <div
+            className={cn(
+                'relative flex flex-col items-center text-center',
+                onBanner &&
+                    'rounded-[22px] border border-hairline bg-card px-6 py-9 shadow-[0_8px_30px_rgba(0,0,0,0.06)] sm:py-11',
+            )}
+        >
             <div
                 className={cn(
                     'flex size-16 items-center justify-center rounded-full text-white',

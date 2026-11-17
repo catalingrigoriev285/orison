@@ -57,18 +57,21 @@ type Props = {
 };
 
 export default function IncidentShow({ incident, components }: Props) {
-    const { t } = useTrans();
+    const { t, translated } = useTrans();
 
     useBreadcrumbs([
         { title: t('Incidents'), href: incidents.index() },
-        { title: incident.title.ro ?? '', href: incidents.show(incident.id) },
+        {
+            title: translated(incident.title),
+            href: incidents.show(incident.id),
+        },
     ]);
 
     return (
         <AdminPage>
-            <Head title={incident.title.ro ?? t('Incident')} />
+            <Head title={translated(incident.title) || t('Incident')} />
             <PageHeader
-                title={incident.title.ro}
+                title={translated(incident.title)}
                 description={
                     <span className="flex flex-wrap items-center gap-2">
                         <StatusBadge
@@ -216,7 +219,7 @@ function UpdateRow({
     update: Update;
     canDelete: boolean;
 }) {
-    const { t, locale, timezone } = useTrans();
+    const { t, translated, locale, timezone } = useTrans();
     const [editing, setEditing] = useState(false);
     const form = useForm<{ status: IncidentStatus; message: Translations }>({
         status: update.status,
@@ -287,7 +290,7 @@ function UpdateRow({
                     </span>
                     <span className="text-muted-foreground"> — </span>
                     <span className="whitespace-pre-line">
-                        {update.message.ro}
+                        {translated(update.message)}
                     </span>
                 </p>
                 <div className="flex shrink-0 gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">

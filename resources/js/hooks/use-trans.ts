@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 import { useCallback } from 'react';
-import type { Locale } from '@/types';
+import type { Locale, Translations } from '@/types';
 
 export type TranslateFn = (
     key: string,
@@ -13,11 +13,13 @@ export type TranslateFn = (
  */
 export function useTrans(): {
     t: TranslateFn;
+    translated: (values: Translations | null | undefined) => string;
     locale: Locale;
     locales: Locale[];
     timezone: string;
 } {
-    const { translations, locale, locales, timezone } = usePage().props;
+    const { translations, locale, locales, timezone, defaultLocale } =
+        usePage().props;
 
     const t = useCallback<TranslateFn>(
         (key, replacements = {}) => {
@@ -32,5 +34,15 @@ export function useTrans(): {
         [translations],
     );
 
-    return { t, locale, locales, timezone };
+    /** Pick a {ro, ru, en} value in the current language, then the default one. */
+    const translated = useCallback(
+        (values: Translations | null | undefined): string =>
+            values?.[locale] ||
+            values?.[defaultLocale] ||
+            Object.values(values ?? {}).find(Boolean) ||
+            '',
+        [locale, defaultLocale],
+    );
+
+    return { t, translated, locale, locales, timezone };
 }

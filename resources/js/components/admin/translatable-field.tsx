@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { Textarea } from '@/components/admin/field';
 import InputError from '@/components/input-error';
@@ -14,8 +15,8 @@ const localeNames: Record<Locale, string> = {
 };
 
 /**
- * One field edited in Romanian, Russian and English. Romanian is required;
- * empty translations fall back to it on the public page.
+ * One field edited in every supported language. The default language (set in
+ * Admin → Settings) is required; empty translations fall back to it.
  */
 export function TranslatableField({
     id,
@@ -37,9 +38,12 @@ export function TranslatableField({
     required?: boolean;
 }) {
     const { t, locales } = useTrans();
-    const [active, setActive] = useState<Locale>('ro');
+    const { defaultLocale } = usePage().props;
+    const [active, setActive] = useState<Locale>(defaultLocale);
     const error = errors[`${name}.${active}`] ?? errors[name];
-    const missing = locales.filter((code) => code !== 'ro' && !value[code]);
+    const missing = locales.filter(
+        (code) => code !== defaultLocale && !value[code],
+    );
 
     return (
         <div className="grid gap-2">
@@ -49,7 +53,7 @@ export function TranslatableField({
                     className="text-[13px] font-medium"
                 >
                     {label}
-                    {required && active === 'ro' && (
+                    {required && active === defaultLocale && (
                         <span className="text-muted-foreground"> *</span>
                     )}
                 </Label>
@@ -69,9 +73,11 @@ export function TranslatableField({
                     value: value[code] ?? '',
                     lang: code,
                     placeholder:
-                        code === 'ro'
+                        code === defaultLocale
                             ? ''
-                            : t('Optional — falls back to Romanian'),
+                            : t('Optional — falls back to :language', {
+                                  language: localeNames[defaultLocale],
+                              }),
                     onChange: (
                         event: React.ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement

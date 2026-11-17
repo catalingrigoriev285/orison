@@ -6,6 +6,7 @@ import {
     CalendarClock,
     ExternalLink,
     LayoutGrid,
+    SlidersHorizontal,
     TriangleAlert,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -25,6 +26,7 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useTrans } from '@/hooks/use-trans';
 import { overview } from '@/routes/admin';
 import alerts from '@/routes/admin/alerts';
+import settings from '@/routes/admin/settings';
 import components from '@/routes/admin/components';
 import incidents from '@/routes/admin/incidents';
 import maintenances from '@/routes/admin/maintenances';
@@ -74,6 +76,12 @@ export function AppSidebar() {
             href: alerts.index(),
             icon: BellRing,
             isActive: section(alerts.index()),
+        },
+        {
+            title: t('Settings'),
+            href: settings.edit(),
+            icon: SlidersHorizontal,
+            isActive: section(settings.edit()),
         },
     ];
 

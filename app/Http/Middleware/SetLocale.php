@@ -24,7 +24,7 @@ class SetLocale
         $locale = match (true) {
             is_string($requested) && in_array($requested, $supported, true) => $requested,
             in_array($request->cookie('locale'), $supported, true) => $request->cookie('locale'),
-            default => $request->getPreferredLanguage($supported) ?? config('status.default_locale'),
+            default => $this->fromBrowser($request, $supported) ?? config('status.default_locale'),
         };
 
         app()->setLocale($locale);
@@ -34,5 +34,24 @@ class SetLocale
         }
 
         return $next($request);
+    }
+
+    /**
+     * The first browser language we support. Unlike getPreferredLanguage(),
+     * this returns null when nothing matches so the default language applies.
+     *
+     * @param  array<int, string>  $supported
+     */
+    private function fromBrowser(Request $request, array $supported): ?string
+    {
+        foreach ($request->getLanguages() as $language) {
+            $code = strtolower(substr($language, 0, 2));
+
+            if (in_array($code, $supported, true)) {
+                return $code;
+            }
+        }
+
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
@@ -7,7 +7,19 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import StatusLayout from '@/layouts/status-layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Orison';
+// The brand name is editable in Admin → Settings, so read it from the page
+// instead of baking it in at build time.
+let appName =
+    (typeof document !== 'undefined' &&
+        document
+            .querySelector('meta[name="application-name"]')
+            ?.getAttribute('content')) ||
+    import.meta.env.VITE_APP_NAME ||
+    'Orison';
+
+router.on('navigate', (event) => {
+    appName = event.detail.page.props.brand?.name ?? appName;
+});
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

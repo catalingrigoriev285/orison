@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\IncidentUpdateController;
 use App\Http\Controllers\Admin\MaintenanceController;
 use App\Http\Controllers\Admin\MonitorController;
 use App\Http\Controllers\Admin\OverviewController;
+use App\Http\Controllers\Admin\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
@@ -28,6 +29,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
         ->scoped();
 
     Route::resource('maintenances', MaintenanceController::class)->except('show');
+
+    Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
 
     Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
     Route::post('alerts/test', [AlertController::class, 'test'])->middleware('throttle:10,1')->name('alerts.test');

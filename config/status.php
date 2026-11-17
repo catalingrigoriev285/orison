@@ -8,13 +8,21 @@ return [
     |--------------------------------------------------------------------------
     |
     | The name shown in the status page header and browser title, and an
-    | optional link back to your main website in the footer.
+    | optional link back to your main website in the footer. These are only
+    | defaults: everything here can be changed under Admin → Settings.
     |
     */
 
     'brand' => [
         'name' => env('STATUS_BRAND_NAME', 'Orison'),
+        'description' => null,
         'website_url' => env('STATUS_WEBSITE_URL'),
+        'logo' => null,
+        'favicon' => null,
+        'accent_color' => '#0071e3',
+        'background' => null,
+        'show_background' => true,
+        'default_background' => 'assets/background.png',
     ],
 
     /*

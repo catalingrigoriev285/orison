@@ -53,14 +53,14 @@ export default function ComponentForm({
     groups,
     nextSortOrder,
 }: Props) {
-    const { t } = useTrans();
+    const { t, translated } = useTrans();
     const isEditing = component !== null;
 
     useBreadcrumbs([
         { title: t('Components'), href: componentRoutes.index() },
         isEditing
             ? {
-                  title: component.name.ro ?? '',
+                  title: translated(component.name),
                   href: componentRoutes.edit(component.id),
               }
             : { title: t('New component'), href: componentRoutes.create() },
@@ -121,9 +121,9 @@ export default function ComponentForm({
                                 slug:
                                     isEditing ||
                                     current.slug !==
-                                        slugify(current.name.ro ?? '')
+                                        slugify(translated(current.name))
                                         ? current.slug
-                                        : slugify(value.ro ?? ''),
+                                        : slugify(translated(value)),
                             }));
                         }}
                     />

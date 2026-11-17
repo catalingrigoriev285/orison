@@ -34,14 +34,14 @@ type Props = {
 };
 
 export default function MaintenanceForm({ maintenance, components }: Props) {
-    const { t, timezone } = useTrans();
+    const { t, translated, timezone } = useTrans();
     const isEditing = maintenance !== null;
 
     useBreadcrumbs([
         { title: t('Maintenance'), href: maintenances.index() },
         isEditing
             ? {
-                  title: maintenance.title.ro ?? '',
+                  title: translated(maintenance.title),
                   href: maintenances.edit(maintenance.id),
               }
             : { title: t('Schedule maintenance'), href: maintenances.create() },

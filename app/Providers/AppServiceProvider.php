@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Settings\SystemSettings;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        $this->app->make(SystemSettings::class)->apply();
     }
 
     /**

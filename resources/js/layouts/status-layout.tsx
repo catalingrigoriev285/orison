@@ -4,12 +4,15 @@ import { BrandMark } from '@/components/brand-mark';
 import { LanguageSwitcher } from '@/components/status/language-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useTrans } from '@/hooks/use-trans';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { history } from '@/routes/status';
 
 export default function StatusLayout({ children }: { children: ReactNode }) {
     const { t } = useTrans();
-    const { brand } = usePage().props;
+    const { props, component } = usePage();
+    const { brand } = props;
+    const showBanner = component === 'status/index' && !!brand.background_url;
 
     return (
         <div className="flex min-h-svh flex-col bg-background">
@@ -34,9 +37,30 @@ export default function StatusLayout({ children }: { children: ReactNode }) {
                 </div>
             </header>
 
-            <main className="mx-auto w-full max-w-3xl flex-1 px-4 pt-10 pb-16 sm:px-6 sm:pt-14">
-                {children}
-            </main>
+            <div className="relative flex flex-1 flex-col">
+                {showBanner && (
+                    <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-0 top-0 h-[clamp(220px,30vw,380px)] overflow-hidden bg-[#eef3fb] dark:bg-[#0b0d12]"
+                    >
+                        <img
+                            src={brand.background_url ?? ''}
+                            alt=""
+                            className="size-full object-cover object-center dark:opacity-30"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-b from-transparent to-background" />
+                    </div>
+                )}
+
+                <main
+                    className={cn(
+                        'relative mx-auto w-full max-w-3xl flex-1 px-4 pb-16 sm:px-6',
+                        showBanner ? 'pt-6 sm:pt-8' : 'pt-10 sm:pt-14',
+                    )}
+                >
+                    {children}
+                </main>
+            </div>
 
             <footer className="border-t border-hairline">
                 <div className="mx-auto flex max-w-3xl flex-col items-center justify-between gap-2 px-4 py-6 text-[13px] text-muted-foreground sm:flex-row sm:px-6">

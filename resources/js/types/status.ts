@@ -110,3 +110,13 @@ export type AlertSummary = {
 };
 
 export type Option = { id: number; name: string };
+
+export type Brand = {
+    name: string;
+    description: string | null;
+    website_url: string | null;
+    logo_url: string | null;
+    favicon_url: string | null;
+    accent_color: string;
+    background_url: string | null;
+};

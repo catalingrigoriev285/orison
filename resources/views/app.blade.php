@@ -30,13 +30,34 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php($brand = app(\App\Services\Settings\SystemSettings::class)->brand())
+
+        {{-- The accent colour chosen in Admin → Settings drives buttons, links and focus rings. --}}
+        <style>
+            html:root, html.dark {
+                --primary: {{ $brand['accent_color'] }};
+                --ring: {{ $brand['accent_color'] }};
+                --sidebar-primary: {{ $brand['accent_color'] }};
+                --sidebar-ring: {{ $brand['accent_color'] }};
+            }
+        </style>
+
+        @if ($brand['favicon_url'])
+            <link rel="icon" href="{{ $brand['favicon_url'] }}">
+            <link rel="apple-touch-icon" href="{{ $brand['favicon_url'] }}">
+        @else
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        @endif
+
+        @if ($brand['description'])
+            <meta name="description" content="{{ $brand['description'] }}">
+        @endif
+        <meta name="application-name" content="{{ $brand['name'] }}">
 
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $brand['name'] }}</title>
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

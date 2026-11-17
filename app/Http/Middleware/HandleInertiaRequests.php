@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Settings\SystemSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,7 +39,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'brand' => config('status.brand'),
+            'brand' => app(SystemSettings::class)->brand(),
+            'defaultLocale' => config('status.default_locale'),
             'auth' => [
                 'user' => $request->user(),
             ],
