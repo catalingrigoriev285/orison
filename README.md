@@ -98,8 +98,6 @@ Most things are edited in **Admin → Settings**. The `.env` values below are on
 | `STATUS_BRAND_NAME` | Default name shown in the header |
 | `STATUS_WEBSITE_URL` | Default link back to your main website |
 | `STATUS_TIMEZONE` | Default display timezone (data is stored in UTC) |
-| `STATUS_WEBHOOK_URL` | Where alerts are sent |
-| `STATUS_WEBHOOK_SECRET` | Secret used to sign alerts |
 | `TRUSTED_PROXIES` | Comma-separated IPs or CIDR ranges of reverse proxies in front of Orison |
 | `DB_JOURNAL_MODE`, `DB_BUSY_TIMEOUT`, `DB_SYNCHRONOUS` | SQLite pragmas (the Docker image sets `wal`, `5000`, `normal`) |
 
@@ -107,7 +105,7 @@ Further options, such as how many days of history to keep, are in [config/status
 
 ## Alert webhook
 
-Every alert is sent as a JSON `POST` to `STATUS_WEBHOOK_URL`. Your application decides who to notify and how.
+Every alert is sent as a JSON `POST` to the webhook URL set in **Admin → Alerts**, signed with the secret kept next to it. Both are stored in the database, not in `.env`: the panel can generate the secret, show it and copy it, and a new value takes effect on the next delivery without restarting the queue worker. Your application decides who to notify and how.
 
 Events: `monitor.down`, `monitor.up`, `incident.created`, `incident.updated`, `incident.resolved`, `maintenance.scheduled`, `maintenance.started`, `maintenance.completed`, `test`.
 

@@ -9,10 +9,11 @@ use App\Models\Component;
 use App\Models\Incident;
 use App\Models\Maintenance;
 use App\Models\User;
+use App\Services\Alerts\WebhookSettings;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
-    config(['status.webhook.url' => 'https://example.com/hooks/status']);
+    app(WebhookSettings::class)->store('https://example.com/hooks/status', str_repeat('s', 40));
     Queue::fake([SendAlertWebhook::class]);
     $this->user = User::factory()->create();
     $this->actingAs($this->user);

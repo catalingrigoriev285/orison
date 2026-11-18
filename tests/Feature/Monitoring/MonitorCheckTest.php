@@ -11,12 +11,13 @@ use App\Models\Component;
 use App\Models\Incident;
 use App\Models\Maintenance;
 use App\Models\Monitor;
+use App\Services\Alerts\WebhookSettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
-    config(['status.webhook.url' => 'https://example.com/hooks/status']);
+    app(WebhookSettings::class)->store('https://example.com/hooks/status', str_repeat('s', 40));
 });
 
 test('a monitor goes down only after the failure threshold is reached', function () {

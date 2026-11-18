@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AlertDelivery;
+use App\Services\Alerts\WebhookSettings;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
@@ -26,7 +27,7 @@ class SendAlertWebhook implements ShouldQueue
         return [10, 60, 300, 900];
     }
 
-    public function handle(): void
+    public function handle(WebhookSettings $webhook): void
     {
         $url = (string) $this->delivery->target_url;
         $body = (string) json_encode($this->delivery->payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -40,7 +41,7 @@ class SendAlertWebhook implements ShouldQueue
                     'X-Status-Event' => $this->delivery->event->value,
                     'X-Status-Delivery' => $this->delivery->uuid,
                     'X-Status-Timestamp' => $timestamp,
-                    'X-Status-Signature' => self::signature($timestamp, $body, (string) config('status.webhook.secret')),
+                    'X-Status-Signature' => self::signature($timestamp, $body, (string) $webhook->secret()),
                     'User-Agent' => 'Orison/1.0',
                 ])
                 ->withBody($body, 'application/json')

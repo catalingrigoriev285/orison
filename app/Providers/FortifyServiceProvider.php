@@ -17,6 +17,17 @@ use Laravel\Fortify\Fortify;
 class FortifyServiceProvider extends ServiceProvider
 {
     /**
+     * Requests per minute. The login page asks for passkey options on every
+     * load, so these stay generous enough for reloads and a few typos while
+     * still stopping password guessing (login is keyed by e-mail + IP).
+     */
+    public const LOGIN_PER_MINUTE = 20;
+
+    public const TWO_FACTOR_PER_MINUTE = 10;
+
+    public const PASSKEYS_PER_MINUTE = 60;
+
+    /**
      * Register any application services.
      */
     public function register(): void
@@ -78,17 +89,17 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+            return Limit::perMinute(self::TWO_FACTOR_PER_MINUTE)->by($request->session()->get('login.id'));
         });
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
-            return Limit::perMinute(5)->by($throttleKey);
+            return Limit::perMinute(self::LOGIN_PER_MINUTE)->by($throttleKey);
         });
 
         RateLimiter::for('passkeys', function (Request $request) {
-            return Limit::perMinute(10)->by(
+            return Limit::perMinute(self::PASSKEYS_PER_MINUTE)->by(
                 ($request->input('credential.id') ?: $request->session()->getId()).'|'.$request->ip(),
             );
         });

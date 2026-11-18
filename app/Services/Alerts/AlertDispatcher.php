@@ -9,6 +9,10 @@ use Illuminate\Support\Str;
 
 class AlertDispatcher
 {
+    public const NOT_CONFIGURED = 'The webhook URL is not configured (Admin → Alerts).';
+
+    public function __construct(private WebhookSettings $webhook) {}
+
     /**
      * Record an alert and queue its delivery to the configured webhook.
      *
@@ -16,7 +20,7 @@ class AlertDispatcher
      */
     public function dispatch(AlertEvent $event, array $data): AlertDelivery
     {
-        $url = config('status.webhook.url');
+        $url = $this->webhook->url();
 
         $delivery = AlertDelivery::create([
             'uuid' => (string) Str::uuid(),
@@ -27,7 +31,7 @@ class AlertDispatcher
                 ...$data,
             ],
             'target_url' => $url,
-            'error' => blank($url) ? 'STATUS_WEBHOOK_URL is not configured.' : null,
+            'error' => blank($url) ? self::NOT_CONFIGURED : null,
             'failed_at' => blank($url) ? now() : null,
         ]);
 
@@ -43,12 +47,12 @@ class AlertDispatcher
      */
     public function retry(AlertDelivery $delivery): void
     {
-        $url = config('status.webhook.url');
+        $url = $this->webhook->url();
 
         $delivery->update([
             'target_url' => $url,
             'failed_at' => blank($url) ? now() : null,
-            'error' => blank($url) ? 'STATUS_WEBHOOK_URL is not configured.' : null,
+            'error' => blank($url) ? self::NOT_CONFIGURED : null,
         ]);
 
         if (filled($url)) {

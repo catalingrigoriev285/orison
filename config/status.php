@@ -81,8 +81,10 @@ return [
     | Alert webhook
     |--------------------------------------------------------------------------
     |
-    | Every alert is POSTed as JSON to this URL (your own application or an
-    | automation tool), which decides who gets notified and how.
+    | Every alert is POSTed as JSON to the webhook URL set on Admin → Alerts
+    | (your own application or an automation tool), which decides who gets
+    | notified and how. The URL and the signing secret are stored in the
+    | settings table (App\Services\Alerts\WebhookSettings), not in .env.
     |
     | Headers sent with every request:
     |   X-Status-Event      e.g. "monitor.down"
@@ -102,8 +104,6 @@ return [
     */
 
     'webhook' => [
-        'url' => env('STATUS_WEBHOOK_URL'),
-        'secret' => env('STATUS_WEBHOOK_SECRET'),
         'timeout' => (int) env('STATUS_WEBHOOK_TIMEOUT', 10),
     ],
 

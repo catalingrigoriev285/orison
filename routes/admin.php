@@ -34,6 +34,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
 
     Route::get('alerts', [AlertController::class, 'index'])->name('alerts.index');
+    Route::put('alerts/webhook', [AlertController::class, 'updateWebhook'])->name('alerts.webhook');
     Route::post('alerts/test', [AlertController::class, 'test'])->middleware('throttle:10,1')->name('alerts.test');
     Route::post('alerts/{delivery}/retry', [AlertController::class, 'retry'])->name('alerts.retry');
 });

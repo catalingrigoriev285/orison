@@ -4,18 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\AlertEvent;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\WebhookSettingsRequest;
 use App\Models\AlertDelivery;
 use App\Services\Alerts\AlertDispatcher;
+use App\Services\Alerts\WebhookSettings;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class AlertController extends Controller
 {
-    public function index(): Response
+    public function index(WebhookSettings $webhook): Response
     {
-        $url = config('status.webhook.url');
-
         return Inertia::render('admin/alerts/index', [
             'deliveries' => AlertDelivery::query()->latest()->latest('id')->paginate(25)
                 ->through(fn (AlertDelivery $delivery) => [
@@ -27,10 +27,19 @@ class AlertController extends Controller
                     'uuid' => $delivery->uuid,
                 ]),
             'webhook' => [
-                'url' => $url,
-                'has_secret' => filled(config('status.webhook.secret')),
+                'url' => $webhook->url(),
+                'secret' => $webhook->secret(),
             ],
         ]);
+    }
+
+    public function updateWebhook(WebhookSettingsRequest $request, WebhookSettings $webhook): RedirectResponse
+    {
+        $webhook->store($request->validated('url'), $request->validated('secret'));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Webhook saved.')]);
+
+        return back();
     }
 
     public function test(AlertDispatcher $alerts): RedirectResponse
