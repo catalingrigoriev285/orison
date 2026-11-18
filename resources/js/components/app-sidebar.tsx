@@ -6,6 +6,7 @@ import {
     CalendarClock,
     ExternalLink,
     LayoutGrid,
+    ListOrdered,
     SlidersHorizontal,
     TriangleAlert,
 } from 'lucide-react';
@@ -31,6 +32,7 @@ import components from '@/routes/admin/components';
 import incidents from '@/routes/admin/incidents';
 import maintenances from '@/routes/admin/maintenances';
 import monitors from '@/routes/admin/monitors';
+import queue from '@/routes/admin/queue';
 import { home as statusPage } from '@/routes';
 import type { NavItem } from '@/types';
 
@@ -76,6 +78,12 @@ export function AppSidebar() {
             href: alerts.index(),
             icon: BellRing,
             isActive: section(alerts.index()),
+        },
+        {
+            title: t('Queue'),
+            href: queue.index(),
+            icon: ListOrdered,
+            isActive: section(queue.index()),
         },
         {
             title: t('Settings'),

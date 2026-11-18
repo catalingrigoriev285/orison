@@ -15,6 +15,7 @@ test('guests are redirected from the admin panel', function (string $route) {
     'admin.incidents.index',
     'admin.maintenances.index',
     'admin.alerts.index',
+    'admin.queue.index',
 ]);
 
 test('administrators can open every admin section', function (string $route, string $component) {
@@ -31,6 +32,7 @@ test('administrators can open every admin section', function (string $route, str
     ['admin.incidents.create', 'admin/incidents/create'],
     ['admin.maintenances.index', 'admin/maintenances/index'],
     ['admin.alerts.index', 'admin/alerts/index'],
+    ['admin.queue.index', 'admin/queue/index'],
 ]);
 
 test('unverified users cannot open the admin panel', function () {
